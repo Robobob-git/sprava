@@ -41,6 +41,8 @@ def main():
 
         id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
         print(f"ensuite : {id_amis1}")
+    
+    print("amongus")
 
 
 if __name__ == "__main__":
