@@ -2,6 +2,8 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
+from autre_fonctions import obtenir_vrai_chemin
+
 from interface_graphique import BoutonCustom
 from gestionnaires_requetes import GestionAmis
 from amis import Ami
@@ -103,10 +105,12 @@ class InterfaceMessagerie(QWidget):
     def faire_interface(self):
         widget_colonne_contacts = ColonneContacts(amis=self.liste_amis)
         widget_logo = QLabel()
-        widget_bouton_ami = BoutonCustom(texte="Mes Amis", )
+        widget_bouton_ami = BoutonCustom(texte="Mes Amis", chemin_image=obtenir_vrai_chemin('/images/amis.png'))
 
 
+        self.layout.addWidget(widget_bouton_ami, 0, 0)
         self.layout.addWidget(widget_colonne_contacts, 0, 1)
+        
 
         #self.bouton1 = BoutonCustom(texte="1", layout_parent=self.layout, ligne=0, colonne=1, nouvelle_page=False)
         #self.bouton2 = BoutonCustom(texte="2", layout_parent=self.layout, ligne=0, colonne=2, nouvelle_page=False)
