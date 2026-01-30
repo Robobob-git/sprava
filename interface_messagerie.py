@@ -16,23 +16,33 @@ class WidgetAmi(QWidget):
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(10, 5, 10, 5)
 
+        self._construire_widget()
+
+        self.setLayout(self.layout)
+    
+    def _construire_widget(self):
         pp = QLabel()
-        '''pp.setPixmap(...)
+        '''pp.setPixmap(ami.pp)
         avatar_label.setFixedSize(40, 40)'''
 
         # Infos (nom + statut)
         info_layout = QVBoxLayout()
         info_layout.setSpacing(2)
 
-        status = QLabel(ami.status)
-        couleur = "#43b581" if ami.status == "online" else "#747f8d"
+        nom = QLabel(self.ami.username)
+        info_layout.addWidget(nom)
+
+        '''status = QLabel(self.ami.status)
+        couleur = "#43b581" if self.ami.status == "online" else "#747f8d"
         status.setStyleSheet(f"color: {couleur}; font-size: 9pt;")
+        info_layout.addWidget(status)'''
+
+
 
         self.layout.addWidget(pp)
         self.layout.addLayout(info_layout)
         self.layout.addStretch()
 
-        self.setLayout(self.layout)
 
 class WidgetExtraBouton(QWidget):
     def __init__(self, texte: str, icone: str | None=None):
@@ -141,7 +151,7 @@ class InterfaceMessagerie(QWidget):
 
         widget_colonne_contacts = ListeElements()
         for ami in self.liste_amis:
-            widget_colonne_contacts.ajouter_item(data=ami.username, widget=WidgetAmi(ami))
+            widget_colonne_contacts.ajouter_item(data=ami, widget=WidgetAmi(ami))
         widget_colonne_contacts.itemClicked.connect(self.contact_clique)
 
 

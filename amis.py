@@ -7,4 +7,4 @@ class Ami:
         self.date_of_birth = ami_infos.get("date_of_birth")
         self.avatar_id = ami_infos.get("avatar_id")
 
-        self.status = "online"
+        '''self.status = "online"'''

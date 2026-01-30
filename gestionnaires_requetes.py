@@ -6,7 +6,7 @@ class GestionRequetes:
     def __init__(self, token=None):
         self.token = token
 
-    def faire_requete(self, url:str, type_de_r:str, body:dict=None):
+    def faire_requete(self, url:str, type_de_r:str, body:dict=None, files=None):
         if self.token is not None:
             headers = {"Authorization": f"{self.token}"}
         else:
@@ -15,8 +15,8 @@ class GestionRequetes:
         if type_de_r == 'get':
             rep = requests.get(f"{LIEN_API}{url}", headers=headers)
 
-        elif type_de_r == 'post':    
-            rep = requests.post(f"{LIEN_API}{url}", headers=headers, json=body)
+        elif type_de_r == 'post':
+            rep = requests.post(f"{LIEN_API}{url}", headers=headers, json=body, files=files)
         
         elif type_de_r == 'delete':
             rep = requests.delete(f"{LIEN_API}{url}", headers=headers, json=body)
@@ -65,6 +65,13 @@ class GestionUtilisateurs:
             return rep.get('users')
         else:
             return
+
+    def changer_pp(self, pp_path:str):
+        with open(pp_path, "rb") as image_file:
+            files = {"file": image_file}
+            rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_avatar", type_de_r='post', files=files)
+        print(rep)
+        return
 
 class GestionAmis:
     def __init__(self, user_id:int, token):
@@ -162,3 +169,7 @@ class GestionConnexions:
         else:
             print(rep)
             return rep
+
+class GestionMedia:
+    def __init__(self, token:str):
+        self.gestionnaire_de_requetes = GestionRequetes(token=self.token)
