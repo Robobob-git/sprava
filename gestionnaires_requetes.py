@@ -156,5 +156,9 @@ class GestionConnexions:
     def connexion(self, mail:str, mdp:str):
         body = {"mail": mail, "password": mdp}
         rep = self.requetur_sans_token.faire_requete(url=f"/login", type_de_r='post',body=body)
-        print(rep)
-        return rep
+        
+        if rep.get('status_code') == 401:
+            return
+        else:
+            print(rep)
+            return rep

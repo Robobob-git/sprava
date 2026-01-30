@@ -2,7 +2,9 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
-from interface_graphique import BoutonCustom
+from autre_fonctions import obtenir_vrai_chemin
+
+from interface_graphique import BoutonCustom, ListeElements
 from gestionnaires_requetes import GestionAmis
 from amis import Ami
 
@@ -34,7 +36,7 @@ class WidgetAmi(QWidget):
 
 
 
-class ColonneContacts(QWidget):
+'''class ColonneContacts(QWidget):
     def __init__(self, amis:list[Ami]):
         super().__init__()
 
@@ -77,7 +79,7 @@ class ColonneContacts(QWidget):
         
         def contact_clique(self, item):
             ami = item.data(Qt.ItemDataRole.UserRole)
-            print(f"Ami cliqué : {ami.username}")
+            print(f"Ami cliqué : {ami.username}")'''
 
 
 
@@ -101,15 +103,41 @@ class InterfaceMessagerie(QWidget):
         
 
     def faire_interface(self):
-        widget_colonne_contacts = ColonneContacts(amis=self.liste_amis)
-        widget_logo = QLabel()
-        widget_bouton_ami = BoutonCustom(texte="Mes Amis", )
-
-
-        self.layout.addWidget(widget_colonne_contacts, 0, 1)
+        self.faire_barre_laterale()
+        
 
         #self.bouton1 = BoutonCustom(texte="1", layout_parent=self.layout, ligne=0, colonne=1, nouvelle_page=False)
         #self.bouton2 = BoutonCustom(texte="2", layout_parent=self.layout, ligne=0, colonne=2, nouvelle_page=False)
 
         self.champ_de_texte = QLineEdit("Ecrire un message...")
-        self.layout.addWidget(self.champ_de_texte, 1, 2)
+        self.layout.addWidget(self.champ_de_texte, 0, 1)
+
+    def faire_barre_laterale(self):
+        widget_barre_laterale = QWidget()
+        layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
+
+
+        widget_colonne_contacts = ListeElements(donnees=self.liste_amis, widget_type=lambda ami: WidgetAmi(ami), on_click=self.contact_clique)
+
+        widget_logo = QLabel()
+
+
+        widget_extra_bouton = QWidget()
+        widget_extra_bouton.setLayout(QHBoxLayout())
+        widget_liste_extra_boutons = ListeElements(donnees=["bouton_ami"], widget_type=lambda widget: QWidget(), on_click=self.extra_bouton_clique)
+        #widget_bouton_ami = BoutonCustom(texte="Mes Amis", taille=(200, 50), chemin_image=obtenir_vrai_chemin('images/friends.png'), layout_horizontal=True)
+
+        
+
+        layout_barre_laterale.addWidget(widget_bouton_ami)
+        layout_barre_laterale.addWidget(widget_colonne_contacts)
+
+        self.layout.addWidget(widget_barre_laterale, 0, 0)
+    
+    def extra_bouton_clique(self, item):
+        data = item.data(Qt.ItemDataRole.UserRole)
+        print(f"Extra bouton cliqué : {data}")
+
+    def contact_clique(self, item):
+        ami = item.data(Qt.ItemDataRole.UserRole)
+        print(f"Ami cliqué : {ami.username}")

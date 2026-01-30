@@ -1,15 +1,10 @@
 import sys
 import os
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
-def obtenir_vrai_chemin(chemin_relatif): # Retourne le chemin absolu pour éviter les soucis de chemins
-  # Si l'application est exécutée comme script Python :
-  chemin_brut = os.path.dirname(os.path.abspath(__file__))
-    
-  # Construit et retourne le chemin absolu
-  return os.path.join(chemin_brut, chemin_relatif)
+from autre_fonctions import obtenir_vrai_chemin
 
 class FenetrePrincipale(QMainWindow):
     def __init__(self):
@@ -69,7 +64,7 @@ class FenetrePrincipale(QMainWindow):
 
 
 class BoutonCustom(QPushButton):
-    def __init__(self, texte:str, taille=(200, 200), marge:float or int = 20, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
+    def __init__(self, texte:str, taille=(200, 200), marge:float or int = 20, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False, layout_horizontal:bool=False):
         super().__init__()
         self.custom_custom_command = custom_command
         self.nouvelle_page = nouvelle_page
@@ -79,12 +74,17 @@ class BoutonCustom(QPushButton):
         self.setMinimumSize(*taille)
 
         # Crée un layout dans le bouton-même pour organiser texte et image
-        bouton_layout = QVBoxLayout(self)
+        if not layout_horizontal:
+          bouton_layout = QVBoxLayout(self)
+        else:
+          bouton_layout = QHBoxLayout(self)
+
 
         # Met le texte en tant que Label affiché sur le haut du bouton 
         text_label = QLabel(texte)
         text_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Centre le texte
-        bouton_layout.addWidget(text_label)
+        if not layout_horizontal:
+          bouton_layout.addWidget(text_label)
 
         # Si il y a un chemin d'image associé, met une image sur le bouton en dessous du texte
         if chemin_image:
@@ -94,6 +94,8 @@ class BoutonCustom(QPushButton):
             image_label.setPixmap(scaled_pixmap)
             image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             bouton_layout.addWidget(image_label, alignment=Qt.AlignmentFlag.AlignCenter)
+            if layout_horizontal:
+              bouton_layout.addWidget(text_label)
 
         # Ajoute un évènement quand on clique sur le bouton
         self.clicked.connect(self.on_bouton_clicked)
@@ -102,7 +104,46 @@ class BoutonCustom(QPushButton):
         if self.custom_custom_command:
             self.custom_custom_command()
 
+class ListeElements(QWidget):
+    def __init__(self, donnees:list, widget_type, on_click):
+        super().__init__()
 
+        self.layout = QVBoxLayout(self)
+        self.liste = QListWidget()
+        self.liste.setStyleSheet("""
+            QListWidget {
+                background-color: #1e1f22;
+                border: none;
+                outline: none;
+            }
+            QListWidget::item {
+                border-bottom: 1px solid #2b2d31;
+                outline: none;
+            }
+            QListWidget::item:hover {
+                background-color: #292b2f;
+            }
+            QListWidget::item:selected {
+                background-color: #2f3136;
+            }
+        """)
+        for donnee in donnees:
+            item = QListWidgetItem(self.liste)
+            item.setData(Qt.ItemDataRole.UserRole, donnee)
+            #item.setSizeHint(QSize(280, 60))
+
+            widget = widget_type(donnee)
+            self.liste.setItemWidget(item, widget)
+
+            self.liste.setItemWidget(item, self.layout)
+
+        if on_click:
+            self.liste.itemClicked.connect(on_click)
+
+        self.layout.addWidget(self.liste)
+        
+
+        
 def main():
     app = QApplication(sys.argv)
     app.setStyle("fusion")
