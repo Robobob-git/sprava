@@ -30,9 +30,31 @@ class WidgetAmi(QWidget):
 
         self.layout.addWidget(pp)
         self.layout.addLayout(info_layout)
-        #self.layout.addStretch()
+        self.layout.addStretch()
 
         self.setLayout(self.layout)
+
+class WidgetExtraBouton(QWidget):
+    def __init__(self, texte: str, icone: str | None=None):
+        super().__init__()
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(10)
+
+        if icone:
+            icon_label = QLabel()
+            pixmap = QPixmap(icone).scaled(20, 20, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            icon_label.setPixmap(pixmap)
+            layout.addWidget(icon_label)
+
+        text_label = QLabel(texte)
+        text_label.setStyleSheet("color: #dcddde; font-size: 11pt;")
+        layout.addWidget(text_label)
+
+        layout.addStretch()
+
+
 
 
 
@@ -117,19 +139,24 @@ class InterfaceMessagerie(QWidget):
         layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
 
 
-        widget_colonne_contacts = ListeElements(donnees=self.liste_amis, widget_type=lambda ami: WidgetAmi(ami), on_click=self.contact_clique)
+        widget_colonne_contacts = ListeElements()
+        for ami in self.liste_amis:
+            widget_colonne_contacts.ajouter_item(data=ami.username, widget=WidgetAmi(ami))
+        widget_colonne_contacts.itemClicked.connect(self.contact_clique)
+
 
         widget_logo = QLabel()
 
 
-        widget_extra_bouton = QWidget()
-        widget_extra_bouton.setLayout(QHBoxLayout())
-        widget_liste_extra_boutons = ListeElements(donnees=["bouton_ami"], widget_type=lambda widget: QWidget(), on_click=self.extra_bouton_clique)
+        
+        widget_liste_extra_boutons = ListeElements()
+        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends')))
+        widget_liste_extra_boutons.itemClicked.connect(self.extra_bouton_clique)
         #widget_bouton_ami = BoutonCustom(texte="Mes Amis", taille=(200, 50), chemin_image=obtenir_vrai_chemin('images/friends.png'), layout_horizontal=True)
 
         
 
-        layout_barre_laterale.addWidget(widget_bouton_ami)
+        layout_barre_laterale.addWidget(widget_liste_extra_boutons)
         layout_barre_laterale.addWidget(widget_colonne_contacts)
 
         self.layout.addWidget(widget_barre_laterale, 0, 0)

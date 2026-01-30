@@ -104,43 +104,34 @@ class BoutonCustom(QPushButton):
         if self.custom_custom_command:
             self.custom_custom_command()
 
-class ListeElements(QWidget):
-    def __init__(self, donnees:list, widget_type, on_click):
-        super().__init__()
+class ListeElements(QListWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        self.layout = QVBoxLayout(self)
-        self.liste = QListWidget()
-        self.liste.setStyleSheet("""
+        self.setSpacing(2)
+        self.setFrameShape(QListWidget.Shape.NoFrame)
+
+        self.setStyleSheet("""
             QListWidget {
                 background-color: #1e1f22;
-                border: none;
-                outline: none;
             }
             QListWidget::item {
-                border-bottom: 1px solid #2b2d31;
-                outline: none;
+                border-radius: 6px;
             }
             QListWidget::item:hover {
-                background-color: #292b2f;
+                background-color: #2b2d31;
             }
             QListWidget::item:selected {
-                background-color: #2f3136;
+                background-color: #404249;
             }
         """)
-        for donnee in donnees:
-            item = QListWidgetItem(self.liste)
-            item.setData(Qt.ItemDataRole.UserRole, donnee)
-            #item.setSizeHint(QSize(280, 60))
 
-            widget = widget_type(donnee)
-            self.liste.setItemWidget(item, widget)
-
-            self.liste.setItemWidget(item, self.layout)
-
-        if on_click:
-            self.liste.itemClicked.connect(on_click)
-
-        self.layout.addWidget(self.liste)
+    def ajouter_item(self, data, widget: QWidget, hauteur=42):
+        item = QListWidgetItem(self)
+        item.setSizeHint(QSize(200, hauteur))
+        item.setData(Qt.ItemDataRole.UserRole, data)
+        self.addItem(item)
+        self.setItemWidget(item, widget)
         
 
         
