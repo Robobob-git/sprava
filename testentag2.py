@@ -1,171 +1,101 @@
 import sys
-from dataclasses import dataclass
-
-from PyQt6.QtCore import Qt, QRect, QSize, QAbstractListModel, QModelIndex
-from PyQt6.QtGui import QPainter, QColor, QPixmap, QFont
 from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QListView,
-    QVBoxLayout,
-    QStyledItemDelegate,
-    QStyle
+    QApplication, QWidget, QHBoxLayout,
+    QPushButton, QButtonGroup, QVBoxLayout, QLabel
 )
+from PyQt6.QtCore import Qt
 
 
-# ----------------------------
-# DATA
-# ----------------------------
-@dataclass
-class Ami:
-    user_id: int
-    username: str
-    status: str   # "online" / "offline"
-    avatar_path: str | None = None
-
-
-# ----------------------------
-# MODEL
-# ----------------------------
-class ModeleAmis(QAbstractListModel):
-    def __init__(self, amis):
-        super().__init__()
-        self.amis = amis
-
-    def rowCount(self, parent=QModelIndex()):
-        return len(self.amis)
-
-    def data(self, index, role):
-        if not index.isValid():
-            return None
-
-        ami = self.amis[index.row()]
-
-        if role == Qt.ItemDataRole.UserRole:
-            return ami
-
-        return None
-
-
-# ----------------------------
-# DELEGATE
-# ----------------------------
-class DelegueAmi(QStyledItemDelegate):
-
-    def paint(self, painter: QPainter, option, index):
-        ami: Ami = index.data(Qt.ItemDataRole.UserRole)
-        rect = option.rect
-
-        # --- fond ---
-        if option.state & QStyle.StateFlag.State_Selected:
-            painter.fillRect(rect, QColor("#2f3136"))
-        elif option.state & QStyle.StateFlag.State_MouseOver:
-            painter.fillRect(rect, QColor("#292b2f"))
-        else:
-            painter.fillRect(rect, QColor("#1e1f22"))
-
-        margin = 10
-        avatar_size = 40
-
-        # --- avatar ---
-        avatar_rect = QRect(
-            rect.left() + margin,
-            rect.top() + (rect.height() - avatar_size) // 2,
-            avatar_size,
-            avatar_size
-        )
-
-        avatar = self._charger_avatar(ami, avatar_size)
-        painter.drawPixmap(avatar_rect, avatar)
-
-        # --- pseudo ---
-        painter.setPen(QColor("white"))
-        painter.setFont(QFont("Arial", 11, QFont.Weight.Bold))
-        painter.drawText(
-            rect.left() + avatar_size + 2 * margin,
-            rect.top() + 25,
-            ami.username
-        )
-
-        # --- statut ---
-        couleur_statut = QColor("#43b581") if ami.status == "online" else QColor("#747f8d")
-        painter.setPen(couleur_statut)
-        painter.setFont(QFont("Arial", 9))
-        painter.drawText(
-            rect.left() + avatar_size + 2 * margin,
-            rect.top() + 45,
-            ami.status
-        )
-
-    def sizeHint(self, option, index):
-        return QSize(250, 60)
-
-    def _charger_avatar(self, ami, size):
-        if ami.avatar_path:
-            pix = QPixmap(ami.avatar_path)
-            if not pix.isNull():
-                return pix.scaled(
-                    size,
-                    size,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-
-        # Avatar par défaut (cercle coloré)
-        pix = QPixmap(size, size)
-        pix.fill(Qt.GlobalColor.transparent)
-
-        painter = QPainter(pix)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setBrush(QColor("#5865f2"))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(0, 0, size, size)
-        painter.end()
-
-        return pix
-
-
-# ----------------------------
-# UI
-# ----------------------------
-class FenetreTest(QWidget):
+class BarreFiltres(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Test liste d'amis - PyQt6")
-        self.resize(300, 400)
 
-        amis = [
-            Ami(1, "Alice", "online"),
-            Ami(2, "Bob", "offline"),
-            Ami(3, "Charlie", "online"),
-            Ami(4, "Diana", "offline"),
-            Ami(5, "Eve", "online"),
-        ]
+        layout = QHBoxLayout(self)
+        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        modele = ModeleAmis(amis)
+        self.group = QButtonGroup(self)
+        self.group.setExclusive(True)
 
-        vue = QListView()
-        vue.setModel(modele)
-        vue.setItemDelegate(DelegueAmi())
-        vue.setMouseTracking(True)
-        vue.setStyleSheet("QListView { border: none; }")
+        # --- Boutons filtres ---
+        self.btn_amis = self.creer_bouton("Amis", checked=True)
+        self.btn_en_ligne = self.creer_bouton("En ligne")
+        self.btn_tous = self.creer_bouton("Tous")
 
-        vue.clicked.connect(self.ami_clique)
+        for btn in (self.btn_amis, self.btn_en_ligne, self.btn_tous):
+            layout.addWidget(btn)
+            self.group.addButton(btn)
 
-        layout = QVBoxLayout()
-        layout.addWidget(vue)
-        self.setLayout(layout)
+        # --- Bouton Ajouter (action) ---
+        self.btn_ajouter = QPushButton("Ajouter")
+        self.btn_ajouter.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_ajouter.setObjectName("ajouter")
+        layout.addWidget(self.btn_ajouter)
 
-    def ami_clique(self, index):
-        ami = index.data(Qt.ItemDataRole.UserRole)
-        print(f"Ami cliqué : {ami.username}")
+        self.setStyleSheet(self.style())
+
+        # Signal
+        self.group.buttonClicked.connect(self.on_filtre_change)
+        self.btn_ajouter.clicked.connect(self.on_ajouter)
+
+    def creer_bouton(self, texte, checked=False):
+        btn = QPushButton(texte)
+        btn.setCheckable(True)
+        btn.setChecked(checked)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        return btn
+
+    def on_filtre_change(self, bouton):
+        print("Filtre actif :", bouton.text())
+
+    def on_ajouter(self):
+        print("Action : ajouter un ami")
+
+    def style(self):
+        return """
+        QPushButton {
+            background-color: #2b2d31;
+            color: white;
+            border-radius: 12px;
+            padding: 6px 14px;
+            border: none;
+            font-size: 13px;
+        }
+
+        QPushButton:hover {
+            background-color: #3a3c43;
+        }
+
+        QPushButton:checked {
+            background-color: #404249;
+        }
+
+        QPushButton#ajouter {
+            background-color: #5865F2;
+            padding: 6px 16px;
+        }
+
+        QPushButton#ajouter:hover {
+            background-color: #4752C4;
+        }
+        """
+
+class Fenetre(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Exemple barre filtres")
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(BarreFiltres())
+        layout.addStretch()
 
 
-# ----------------------------
-# MAIN
-# ----------------------------
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    fenetre = FenetreTest()
+    app.setStyle("Fusion")
+
+    fenetre = Fenetre()
+    fenetre.resize(400, 120)
     fenetre.show()
+
     sys.exit(app.exec())

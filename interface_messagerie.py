@@ -175,6 +175,9 @@ class InterfaceMessagerie(QWidget):
         data = item.data(Qt.ItemDataRole.UserRole)
         print(f"Extra bouton cliqué : {data}")
 
+        if data == "bouton_ami":
+            menu_ami("")
+
     def contact_clique(self, item):
         ami = item.data(Qt.ItemDataRole.UserRole)
         print(f"Ami cliqué : {ami.username}")
