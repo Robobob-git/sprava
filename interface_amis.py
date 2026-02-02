@@ -9,4 +9,7 @@ class InterfaceAmis:
         self.layout = QVBoxLayout()
 
     def construire_ui(self):
-        self.widget_tri_amis = QWidget()
+        widget_tri_amis = QWidget()
+        layout_tri_amis = QHBoxLayout()
+
+        
