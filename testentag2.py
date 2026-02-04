@@ -42,7 +42,7 @@ class BarreFiltres(QWidget):
         btn = QPushButton(texte)
         btn.setCheckable(True)
         btn.setChecked(checked)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        #btn.setCursor(Qt.CursorShape.PointingHandCursor)
         return btn
 
     def on_filtre_change(self, bouton):

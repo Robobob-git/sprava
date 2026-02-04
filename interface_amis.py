@@ -3,13 +3,17 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from amis import Ami
+from interface_graphique import GroupeBoutons, BoutonCustom
+
 
 class InterfaceAmis:
     def __init__(self, amis:list[Ami]):
         self.layout = QVBoxLayout()
 
     def construire_ui(self):
-        widget_tri_amis = QWidget()
-        layout_tri_amis = QHBoxLayout()
+        tous_amis = BoutonCustom(texte="Tous", )
+        boutons_amis = GroupeBoutons()
+        layout_amis = QHBoxLayout()
 
-        
+
+

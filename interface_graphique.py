@@ -132,7 +132,50 @@ class ListeElements(QListWidget):
         item.setData(Qt.ItemDataRole.UserRole, data)
         self.addItem(item)
         self.setItemWidget(item, widget)
+
+class GroupeBoutons(QWidget):
+    def __init__(self, boutons:list[QPushButton]):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.group = QButtonGroup(self)
+        self.group.setExclusive(True)
+
+        for btn in boutons:
+            btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
         
+        self.setStyleSheet("""
+        QPushButton {
+            background-color: #2b2d31;
+            color: white;
+            border-radius: 12px;
+            padding: 6px 14px;
+            border: none;
+            font-size: 13px;
+        }
+
+        QPushButton:hover {
+            background-color: #3a3c43;
+        }
+
+        QPushButton:checked {
+            background-color: #404249;
+        }
+
+        QPushButton#ajouter {
+            background-color: #5865F2;
+            padding: 6px 16px;
+        }
+
+        QPushButton#ajouter:hover {
+            background-color: #4752C4;
+        }
+        """)
+
 
         
 def main():
