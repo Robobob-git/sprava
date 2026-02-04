@@ -9,7 +9,7 @@ from gestionnaires_requetes import GestionAmis
 from amis import Ami
 
 class WidgetAmi(QWidget):
-    def __init__(self, ami:Ami):
+    def __init__(self, ami:Ami, detaillee:bool=False):
         super().__init__()
         self.ami = ami
 

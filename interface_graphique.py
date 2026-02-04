@@ -182,9 +182,6 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("fusion")
 
-    #icone = QIcon(obtenir_vrai_chemin(""))
-    #app.setWindowIcon(icone)
-
     fenetre = fenetre_principale()
     fenetre.show()
     sys.exit(app.exec())
