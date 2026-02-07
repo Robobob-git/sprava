@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from autre_fonctions import obtenir_vrai_chemin
@@ -36,8 +36,8 @@ class FenetrePrincipale(QMainWindow):
         #self.construire_logo()
         self.restore_menu_principal() # Construit la fenêtre principale (la première fois), cette fonction peut être rappelée plus tard pour re-afficher la fenêtre principale
 
-    def ajouter_interface(self, interface):
-        self.layout.addWidget(interface)
+    def ajouter_interface(self, interface, ligne, col):
+        self.layout.addWidget(interface, ligne, col)
 
     def changer_interface(self, interface):
         self.clear_layout()
@@ -64,45 +64,86 @@ class FenetrePrincipale(QMainWindow):
 
 
 class BoutonCustom(QPushButton):
-    def __init__(self, texte:str, taille=(200, 200), marge:float or int = 20, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False, layout_horizontal:bool=False):
+    def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
         super().__init__()
         self.custom_custom_command = custom_command
         self.nouvelle_page = nouvelle_page
+
+        self.setText(texte)
+        self.setFixedSize(*taille)
+
         
-        # Fixe les tailles maximales/minimales
-        self.setMaximumSize(*taille)
-        self.setMinimumSize(*taille)
-
-        # Crée un layout dans le bouton-même pour organiser texte et image
-        if not layout_horizontal:
-          bouton_layout = QVBoxLayout(self)
-        else:
-          bouton_layout = QHBoxLayout(self)
-
-
-        # Met le texte en tant que Label affiché sur le haut du bouton 
-        text_label = QLabel(texte)
-        text_label.setAlignment(Qt.AlignmentFlag.AlignCenter) # Centre le texte
-        if not layout_horizontal:
-          bouton_layout.addWidget(text_label)
-
-        # Si il y a un chemin d'image associé, met une image sur le bouton en dessous du texte
         if chemin_image:
-            pixmap = QPixmap(chemin_image)
-            scaled_pixmap = pixmap.scaled(taille[0]-marge, taille[1]-marge, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            image_label = QLabel()
-            image_label.setPixmap(scaled_pixmap)
-            image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            bouton_layout.addWidget(image_label, alignment=Qt.AlignmentFlag.AlignCenter)
-            if layout_horizontal:
-              bouton_layout.addWidget(text_label)
+            self.setIcon(QIcon(chemin_image))
+            self.setIconSize(taille)
+        
+        self.setStyleSheet(f"""
+        QPushButton {{
+            background-color: #2f3136;      /* gris foncé */
+            color: #ffffff;                 /* texte blanc */
+            border-radius: 6px;             /* arrondi léger */
+            border: none;                   /* pas de bordure */
+            padding: {marge}px;              /* espace intérieur */
+            font-size: 13px;                /* taille du texte */
+        }}
 
+        QPushButton:hover {{
+            background-color: #404249;      /* un peu plus clair au hover */
+        }}
+
+        QPushButton:focus {{
+            outline: none;
+            border: none;
+        }}
+        """)
+
+        if style:
+            self.setStyleSheet(style)
+            
         # Ajoute un évènement quand on clique sur le bouton
         self.clicked.connect(self.on_bouton_clicked)
 
     def on_bouton_clicked(self):
         if self.custom_custom_command:
             self.custom_custom_command()
+
+class BoutonCustomVetical(QToolButton):
+    def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
+        super().__init__()
+        self.custom_custom_command = custom_command
+        self.nouvelle_page = nouvelle_page
+
+        self.setText(texte)
+        self.setFixedSize(*taille)
+
+        
+        if chemin_image:
+            self.setIcon(QIcon(chemin_image))
+            self.setIconSize(taille)
+            self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        self.setStyleSheet(f"""
+        QPushButton {{
+            background-color: #5865F2;
+            border-radius: 8px;
+            color: white;
+            padding: {marge}px;   /* espace entre bord et contenu */
+        }}
+        QPushButton:hover {{
+            background-color: #4752C4;
+        }}
+        """)
+
+        if style:
+            self.setStyleSheet(style)
+            
+        # Ajoute un évènement quand on clique sur le bouton
+        self.clicked.connect(self.on_bouton_clicked)
+
+    def on_bouton_clicked(self):
+        if self.custom_custom_command:
+            self.custom_custom_command()
+
 
 class ListeElements(QListWidget):
     def __init__(self, parent=None):

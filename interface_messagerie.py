@@ -5,6 +5,7 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from autre_fonctions import obtenir_vrai_chemin
 
 from interface_graphique import BoutonCustom, ListeElements
+from interface_amis import InterfaceAmis
 from gestionnaires_requetes import GestionAmis
 from amis import Ami, WidgetAmi
 
@@ -81,8 +82,9 @@ class WidgetExtraBouton(QWidget):
 
 
 class InterfaceMessagerie(QWidget):
-    def __init__(self, user_info:dict, token:str):
+    def __init__(self, fenetre_principale:QMainWindow, user_info:dict, token:str):
         super().__init__()
+        self.fenetre_principale = fenetre_principale
         self.user_info = user_info
         self.token = token
 
@@ -95,10 +97,14 @@ class InterfaceMessagerie(QWidget):
         if amis_infos:
             self.liste_amis = [Ami(a) for a in amis_infos]
 
-        self.faire_interface()
+        self.interface_amis = InterfaceAmis(amis=self.liste_amis)
+        self.layout.addWidget(self.interface_amis, 0, 2)
+        self.interface_amis.hide()
+
+        self._faire_interface()
         
 
-    def faire_interface(self):
+    def _faire_interface(self):
         self.faire_barre_laterale()
         
 
@@ -140,7 +146,8 @@ class InterfaceMessagerie(QWidget):
         print(f"Extra bouton cliqué : {data}")
 
         if data == "bouton_ami":
-            menu_ami("")
+            self.champ_de_texte.hide()
+            self.interface_amis.show()
 
     def contact_clique(self, item):
         ami = item.data(Qt.ItemDataRole.UserRole)

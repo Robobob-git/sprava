@@ -144,8 +144,8 @@ class InterfaceLogin(QWidget):
     def connexion_confirmee(self):
         print(f"token : {self.token}")
         print("Connecté avec succès")
-        interface_messagerie = InterfaceMessagerie(user_info=self.user_info, token=self.token)
-        self.fenetre_principale.ajouter_interface(interface_messagerie)
+        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, user_info=self.user_info, token=self.token)
+        self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
         self.fenetre_principale.changer_interface(interface_messagerie)
 
     def inscription_confirmee(self):

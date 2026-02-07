@@ -1,121 +1,53 @@
 import sys
-from dataclasses import dataclass
-from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
-                              QListWidget, QListWidgetItem, QLabel, QHBoxLayout)
-from PyQt6.QtGui import QPixmap, QPainter, QColor
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QSizePolicy, QToolButton
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QSize
 
-@dataclass
-class Ami:
-    username: str
-    status: str
-    avatar_path: str | None = None
+from autre_fonctions import obtenir_vrai_chemin
 
-class WidgetAmi(QWidget):
-    """Widget personnalisé pour afficher un ami"""
-    def __init__(self, ami: Ami):
+
+class BoutonCustom():
+    def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False, layout_horizontal:bool=False):
         super().__init__()
-        layout = QHBoxLayout()
-        layout.setContentsMargins(10, 5, 10, 5)
+        self.custom_custom_command = custom_command
+        self.nouvelle_page = nouvelle_page
         
-        # Avatar
-        avatar_label = QLabel()
-        avatar = self._creer_avatar(ami, 40)
-        avatar_label.setPixmap(avatar)
-        avatar_label.setFixedSize(40, 40)
-        
-        # Infos (nom + statut)
-        info_layout = QVBoxLayout()
-        info_layout.setSpacing(2)
-        
-        nom = QLabel(ami.username)
-        nom.setStyleSheet("color: white; font-size: 11pt; font-weight: bold;")
-        
-        statut = QLabel(ami.status)
-        couleur = "#43b581" if ami.status == "online" else "#747f8d"
-        statut.setStyleSheet(f"color: {couleur}; font-size: 9pt;")
-        
-        info_layout.addWidget(nom)
-        info_layout.addWidget(statut)
-        
-        layout.addWidget(avatar_label)
-        layout.addLayout(info_layout)
-        layout.addStretch()
-        
-        self.setLayout(layout)
-    
-    def _creer_avatar(self, ami: Ami, size: int):
-        if ami.avatar_path:
-            pix = QPixmap(ami.avatar_path)
-            if not pix.isNull():
-                return pix.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio,
-                                  Qt.TransformationMode.SmoothTransformation)
-        
-        # Avatar par défaut (cercle coloré)
-        pix = QPixmap(size, size)
-        pix.fill(Qt.GlobalColor.transparent)
-        painter = QPainter(pix)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setBrush(QColor("#5865f2"))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(0, 0, size, size)
-        painter.end()
-        return pix
+        if not layout_horizontal:
+            bouton = QPushButton()
+        else:
+            bouton = QToolButton()
 
-class FenetreAmis(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Liste d'amis avec avatars")
-        self.resize(300, 400)
+        bouton.setText(texte)
+        bouton.setFixedSize(*taille)
+
         
-        self.liste = QListWidget()
-        self.liste.setStyleSheet("""
-            QListWidget {
-                background-color: #1e1f22;
-                border: none;
-                outline: none;
-            }
-            QListWidget::item {
-                border-bottom: 1px solid #2b2d31;
-                outline: none;
-            }
-            QListWidget::item:hover {
-                background-color: #292b2f;
-            }
-            QListWidget::item:selected {
-                background-color: #2f3136;
-            }
+        if chemin_image:
+            bouton.setIcon(QIcon(chemin_image))
+            bouton.setIconSize(taille)
+
+            if not layout_horizontal:
+                bouton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        bouton.setStyleSheet(f"""
+        QPushButton {{
+            background-color: #5865F2;
+            border-radius: 8px;
+            color: white;
+            padding: {marge}px;   /* espace entre bord et contenu */
+        }}
+        QPushButton:hover {{
+            background-color: #4752C4;
+        }}
         """)
-        
-        # Ajouter des amis
-        amis = [
-            Ami("Alice", "online"),
-            Ami("Bob", "offline"),
-            Ami("Charlie", "online"),
-            Ami("Diana", "offline"),
-            Ami("Eve", "online"),
-        ]
-        
-        for ami in amis:
-            item = QListWidgetItem(self.liste)
-            item.setSizeHint(QSize(280, 60))
-            item.setData(Qt.ItemDataRole.UserRole, ami)
-            
-            widget = WidgetAmi(ami)
-            self.liste.setItemWidget(item, widget)
-        
-        self.liste.itemClicked.connect(self.ami_clique)
-        
-        layout = QVBoxLayout()
-        layout.addWidget(self.liste)
-        self.setLayout(layout)
-    
-    def ami_clique(self, item):
-        ami = item.data(Qt.ItemDataRole.UserRole)
-        print(f"Ami cliqué : {ami.username}")
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    fenetre = FenetreAmis()
-    fenetre.show()
-    sys.exit(app.exec())
+        if style:
+            bouton.setStyleSheet(style)
+            
+        # Ajoute un évènement quand on clique sur le bouton
+        bouton.clicked.connect(self.on_bouton_clicked)
+
+        return bouton
+
+    def on_bouton_clicked(self):
+        if self.custom_custom_command:
+            self.custom_custom_command()
