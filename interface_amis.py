@@ -10,6 +10,8 @@ class InterfaceAmis(QWidget):
     def __init__(self, amis:list[Ami]):
         super().__init__()
 
+        self.amis = amis
+
         self.layout = QVBoxLayout()
 
     def construire_ui(self):
@@ -33,7 +35,8 @@ class InterfaceAmis(QWidget):
 
 
         liste_amis = ListeElements()
-        
+        for ami in amisliste_amis.ajouter_item()
+
 
     
     def ajouter_ami(self):

@@ -6,43 +6,7 @@ from autre_fonctions import obtenir_vrai_chemin
 
 from interface_graphique import BoutonCustom, ListeElements
 from gestionnaires_requetes import GestionAmis
-from amis import Ami
-
-class WidgetAmi(QWidget):
-    def __init__(self, ami:Ami, detaillee:bool=False):
-        super().__init__()
-        self.ami = ami
-
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(10, 5, 10, 5)
-
-        self._construire_widget()
-
-        self.setLayout(self.layout)
-    
-    def _construire_widget(self):
-        pp = QLabel()
-        '''pp.setPixmap(ami.pp)
-        avatar_label.setFixedSize(40, 40)'''
-
-        # Infos (nom + statut)
-        info_layout = QVBoxLayout()
-        info_layout.setSpacing(2)
-
-        nom = QLabel(self.ami.username)
-        info_layout.addWidget(nom)
-
-        '''status = QLabel(self.ami.status)
-        couleur = "#43b581" if self.ami.status == "online" else "#747f8d"
-        status.setStyleSheet(f"color: {couleur}; font-size: 9pt;")
-        info_layout.addWidget(status)'''
-
-
-
-        self.layout.addWidget(pp)
-        self.layout.addLayout(info_layout)
-        self.layout.addStretch()
-
+from amis import Ami, WidgetAmi
 
 class WidgetExtraBouton(QWidget):
     def __init__(self, texte: str, icone: str | None=None):
