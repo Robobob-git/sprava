@@ -25,7 +25,7 @@ class FenetrePrincipale(QMainWindow):
         # Création du layout en grille pour le contenu
         contenu_widget = QWidget()
         self.layout = QGridLayout()
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         contenu_widget.setLayout(self.layout)
 
         # Met le widget de contenu dans le layout principal
@@ -144,13 +144,35 @@ class BoutonCustomVetical(QToolButton):
         if self.custom_custom_command:
             self.custom_custom_command()
 
+class TexteEtImage(QWidget):
+    def __init__(self, texte:str, chemin_image:str):
+        super().__init__()
+
+        layout = QHBoxLayout()
+
+        label = QLabel(texte)
+        image_label = QLabel()
+        pixmap = QPixmap(chemin_image).scaled(20, 20, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        image_label.setPixmap(pixmap)
+
+        layout.addWidget(label)
+        layout.addWidget(image_label)
+
+        self.setLayout(layout)
+
 
 class ListeElements(QListWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, horizontal:bool=False):
         super().__init__(parent)
 
         self.setSpacing(2)
         self.setFrameShape(QListWidget.Shape.NoFrame)
+
+        if horizontal:
+            self.setFlow(QListView.Flow.LeftToRight)
+            self.setWrapping(False)  # pas de retour à la ligne automatique
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.setStyleSheet("""
             QListWidget {
@@ -167,12 +189,13 @@ class ListeElements(QListWidget):
             }
         """)
 
-    def ajouter_item(self, data, widget: QWidget, hauteur=42):
+    def ajouter_item(self, data, widget: QWidget, largeur=120, hauteur=42):
         item = QListWidgetItem(self)
-        item.setSizeHint(QSize(200, hauteur))
+        item.setSizeHint(QSize(largeur, hauteur))
         item.setData(Qt.ItemDataRole.UserRole, data)
         self.addItem(item)
         self.setItemWidget(item, widget)
+
 
 class GroupeBoutons(QWidget):
     def __init__(self, boutons:list[QPushButton]):
@@ -181,6 +204,7 @@ class GroupeBoutons(QWidget):
         self.layout = QHBoxLayout()
         self.layout.setSpacing(8)
         self.layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.layout)
 
         self.group = QButtonGroup(self)
         self.group.setExclusive(True)
@@ -188,6 +212,7 @@ class GroupeBoutons(QWidget):
         for btn in boutons:
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.layout.addWidget(btn)
         
         self.setStyleSheet("""
         QPushButton {
@@ -217,7 +242,30 @@ class GroupeBoutons(QWidget):
         }
         """)
 
+class LigneCategorie(QWidget):
+        def __init__(self):
+            super().__init__()
 
+            self.layout = QHBoxLayout()
+            self.setLayout(self.layout)
+
+            self.liste_categories = []
+            self.categorie_actuelle = None
+
+        def ajouter_categorie(self, categorie:QWidget):
+            self.layout.addWidget(categorie)
+            self.liste_categories.append(categorie)
+            categorie.hide()
+        
+        def changer_categorie(self, categorie:QWidget):
+            if categorie == self.categorie_actuelle:
+                return
+
+            if categorie in self.liste_categories:
+                categorie.show()
+                self.categorie_actuelle = categorie
+            else:
+                print(f"Catégorie {categorie} innexistante")
         
 def main():
     app = QApplication(sys.argv)

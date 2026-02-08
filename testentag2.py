@@ -1,101 +1,75 @@
 import sys
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QHBoxLayout,
-    QPushButton, QButtonGroup, QVBoxLayout, QLabel
+    QApplication, QWidget, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 )
 from PyQt6.QtCore import Qt
 
 
-class BarreFiltres(QWidget):
+class Header(QWidget):
     def __init__(self):
         super().__init__()
 
-        layout = QHBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(10, 5, 10, 5)
 
-        self.group = QButtonGroup(self)
-        self.group.setExclusive(True)
+        # Titre (page actuelle)
+        self.title = QLabel("Amis")
+        self.title.setObjectName("pageTitle")
 
-        # --- Boutons filtres ---
-        self.btn_amis = self.creer_bouton("Amis", checked=True)
-        self.btn_en_ligne = self.creer_bouton("En ligne")
-        self.btn_tous = self.creer_bouton("Tous")
+        # Bouton Ajouter
+        self.add_button = QPushButton("Ajouter")
+        self.add_button.setObjectName("addButton")
 
-        for btn in (self.btn_amis, self.btn_en_ligne, self.btn_tous):
-            layout.addWidget(btn)
-            self.group.addButton(btn)
+        layout.addWidget(self.title)
+        layout.addStretch()  # pousse le bouton vers la droite
+        layout.addWidget(self.add_button)
 
-        # --- Bouton Ajouter (action) ---
-        self.btn_ajouter = QPushButton("Ajouter")
-        self.btn_ajouter.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_ajouter.setObjectName("ajouter")
-        layout.addWidget(self.btn_ajouter)
+        self.setLayout(layout)
 
-        self.setStyleSheet(self.style())
+        # Connexion du bouton
+        self.add_button.clicked.connect(self.on_add_clicked)
 
-        # Signal
-        self.group.buttonClicked.connect(self.on_filtre_change)
-        self.btn_ajouter.clicked.connect(self.on_ajouter)
+        # Style (QSS)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1e1e2f;
+            }
 
-    def creer_bouton(self, texte, checked=False):
-        btn = QPushButton(texte)
-        btn.setCheckable(True)
-        btn.setChecked(checked)
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        return btn
+            QLabel#pageTitle {
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+            }
 
-    def on_filtre_change(self, bouton):
-        print("Filtre actif :", bouton.text())
+            QPushButton#addButton {
+                background-color: #6C63FF;
+                color: white;
+                border-radius: 10px;
+                padding: 6px 15px;
+            }
 
-    def on_ajouter(self):
-        print("Action : ajouter un ami")
+            QPushButton#addButton:hover {
+                background-color: #7f78ff;
+            }
+        """)
 
-    def style(self):
-        return """
-        QPushButton {
-            background-color: #2b2d31;
-            color: white;
-            border-radius: 12px;
-            padding: 6px 14px;
-            border: none;
-            font-size: 13px;
-        }
+    def on_add_clicked(self):
+        print("Bouton Ajouter cliqué !")
 
-        QPushButton:hover {
-            background-color: #3a3c43;
-        }
 
-        QPushButton:checked {
-            background-color: #404249;
-        }
-
-        QPushButton#ajouter {
-            background-color: #5865F2;
-            padding: 6px 16px;
-        }
-
-        QPushButton#ajouter:hover {
-            background-color: #4752C4;
-        }
-        """
-
-class Fenetre(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Exemple barre filtres")
+        self.setWindowTitle("Exemple PyQt6")
 
-        layout = QVBoxLayout(self)
-        layout.addWidget(BarreFiltres())
-        layout.addStretch()
+        layout = QVBoxLayout()
+        layout.addWidget(Header())
+
+        self.setLayout(layout)
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    app.setStyle("Fusion")
-
-    fenetre = Fenetre()
-    fenetre.resize(400, 120)
-    fenetre.show()
-
-    sys.exit(app.exec())
+app = QApplication(sys.argv)
+window = MainWindow()
+window.resize(400, 200)
+window.show()
+sys.exit(app.exec())
