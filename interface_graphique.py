@@ -162,7 +162,7 @@ class TexteEtImage(QWidget):
 
 
 class ListeElements(QListWidget):
-    def __init__(self, parent=None, horizontal:bool=False):
+    def __init__(self, parent=None, horizontal:bool=False, custom_command=None):
         super().__init__(parent)
 
         self.setSpacing(2)
@@ -188,6 +188,9 @@ class ListeElements(QListWidget):
                 background-color: #404249;
             }
         """)
+
+        if custom_command:
+            self.itemClicked.connect(custom_command)
 
     def ajouter_item(self, data, widget: QWidget, largeur=120, hauteur=42):
         item = QListWidgetItem(self)

@@ -7,6 +7,8 @@ from autre_fonctions import obtenir_vrai_chemin
 from interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
 from interface_amis import InterfaceAmis
 from interface_ajouter_ami import InterfaceAjouterAmi
+from interface_demandes import InterfaceDemandes
+
 from gestionnaires_requetes import GestionAmis
 from amis import Ami, WidgetAmi
 
@@ -123,20 +125,20 @@ class InterfaceMessagerie(QWidget):
         layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
 
 
-        widget_colonne_contacts = ListeElements()
+        widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
         for ami in self.liste_amis:
             widget_colonne_contacts.ajouter_item(data=ami, widget=WidgetAmi(ami))
-        widget_colonne_contacts.itemClicked.connect(self.contact_clique)
 
 
         widget_logo = QLabel()
 
 
         
-        widget_liste_extra_boutons = ListeElements()
-        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends')))
-        widget_liste_extra_boutons.itemClicked.connect(self.extra_bouton_clique)
-        #widget_bouton_ami = BoutonCustom(texte="Mes Amis", taille=(200, 50), chemin_image=obtenir_vrai_chemin('images/friends.png'), layout_horizontal=True)
+        widget_liste_extra_boutons = ListeElements(custom_command=self.extra_bouton_clique)
+
+        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends.png')))
+        widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes.svg')))
+
 
         
 
@@ -156,6 +158,11 @@ class InterfaceMessagerie(QWidget):
         self.interfaces.append(self.interface_ajouter_amis)
         self.interface_ajouter_amis.hide()
 
+        self.interface_demandes = InterfaceDemandes()
+        self.layout.addWidget(self.interface_demandes, 1, 1)
+        self.interfaces.append(self.interface_demandes)
+        self.interface_demandes.hide()
+
         self.interface_active = self.interface_amis
 
     def changer_interface(self, interface):
@@ -174,10 +181,8 @@ class InterfaceMessagerie(QWidget):
 
 
         layout_amis = QHBoxLayout()
-
         label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends.png"))
-
-        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=self.afficher_liste_amis)
+        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=self.changer_interface(self.interface_amis))
         style = """QPushButton {
             background-color: #5865F2;
             color: white;
@@ -198,25 +203,31 @@ class InterfaceMessagerie(QWidget):
             border: none;
         }
         """
-        bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=self.ajouter_ami)
-        groupe_boutons = GroupeBoutons([bouton_tous, bouton_ajouter])
+        bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=self.changer_interface(self.interface_ajouter_amis))
+        groupe_bouton_amis = GroupeBoutons([bouton_tous, bouton_ajouter])
         bouton_tous.setChecked(True)
 
         layout_amis.addWidget(label_logo_amis)
-        layout_amis.addWidget(groupe_boutons)
+        layout_amis.addWidget(groupe_boutons_amis)
         self.categorie_amis = QWidget()
         self.categorie_amis.setLayout(layout_amis)
 
+
+        layout_demandes = QHBoxLayout()
+        label_logo_demandes = TexteEtImage(texte="Demandes", chemin_image=obtenir_vrai_chemin("images/demandes.svg"))
+        bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_recues))
+        bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_envoyees))
+        groupe_boutons_demandes = GroupeBoutons([bouton_recues, bouton_envoyees])
+        layout_demandes.addWidget(label_logo_demandes)
+        layout_demandes.addWidget(groupe_boutons_demandes)
+        self.categorie_demandes = QWidget()
+        self.categorie_demandes.setLayout(layout_demandes)
+
         self.ligne_categorie.ajouter_categorie(self.categorie_amis)
+        self.ligne_categorie.ajouter_categorie(self.categorie_demandes)
         self.ligne_categorie.changer_categorie(self.categorie_amis)
 
         self.layout.addWidget(self.ligne_categorie, 0, 1)
-
-    def ajouter_ami(self):
-        self.changer_interface(self.interface_ajouter_amis)
-
-    def afficher_liste_amis(self):
-        self.changer_interface(self.interface_amis)
 
     def extra_bouton_clique(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)
@@ -224,6 +235,9 @@ class InterfaceMessagerie(QWidget):
 
         if data == "bouton_ami":
             self.ligne_categorie.changer_categorie(self.categorie_amis)
+            self.changer_interface(self.interface_amis)
+        elif data == "bouton_demandes":
+            self.ligne_categorie.changer_categorie(self.categorie_demandes)
 
     def contact_clique(self, item):
         ami = item.data(Qt.ItemDataRole.UserRole)
