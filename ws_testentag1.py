@@ -1,7 +1,19 @@
-from websocket import WebSocketClient
+import json
+import time
+from PyQt6.QtCore import QThread, pyqtSignal
 
-from gestionnaires_requetes import GestionConnexions, GestionUtilisateurs
-from autre_fonctions import obtenir_vrai_chemin
+
+from gestionnaires_requetes import GestionConnexions
+from ws_client import WebSocketClient
+
+
+# -----------------------------
+# Fonctions de test
+# -----------------------------
+def handle_ws_event(event):
+    etype = event.get("type", "unknown")
+    print(f"[WS Event] type={etype} data={event}")
+
 
 def main():
     import os
@@ -9,29 +21,30 @@ def main():
     os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
 
 
+    # --- Connexion et récupération token ---
     gestionnaire_connections = GestionConnexions()
     rep1 = gestionnaire_connections.connexion(mail="p1@mail.com", mdp="p1")
     token1 = rep1.get("api_token")
+    print("Token récupéré :", token1)
 
-    def handle_ws_event(self, event):
-        match event["type"]:
-            case "new_friend_request":
-                self.show_friend_request(event)
-            case "friend_status_change":
-                self.update_friend_status(event)
-            case "new_message":
-                self.add_message(event)
-
+    # --- Création et lancement WebSocket ---
     ws = WebSocketClient(token1)
     ws.message_received.connect(handle_ws_event)
     ws.start()
 
+    print("WebSocket thread démarré. Ctrl+C pour arrêter.")
+
+    # --- Loop Python pour garder le thread vivant ---
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Arrêt demandé, fermeture du WebSocket...")
+        ws.stop()
+        print("Thread WebSocket fermé proprement.")
 
 
 if __name__ == "__main__":
-    print("début")
-
+    print("=== Début du test WebSocket ===")
     main()
-
-    print("Fin")
-
+    print("=== Fin du test ===")
