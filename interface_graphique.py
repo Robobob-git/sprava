@@ -150,13 +150,13 @@ class TexteEtImage(QWidget):
 
         layout = QHBoxLayout()
 
-        label = QLabel(texte)
         image_label = QLabel()
         pixmap = QPixmap(chemin_image).scaled(20, 20, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         image_label.setPixmap(pixmap)
+        label = QLabel(texte)
 
-        layout.addWidget(label)
         layout.addWidget(image_label)
+        layout.addWidget(label)
 
         self.setLayout(layout)
 

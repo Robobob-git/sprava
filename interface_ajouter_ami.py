@@ -5,8 +5,10 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
-    def __init__(self):
+    def __init__(self, gestionnaire_amis):
         super().__init__()
+
+        self.gestionnaire_amis = gestionnaire_amis
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -14,8 +16,8 @@ class InterfaceAjouterAmi(QWidget):
         label_ajouter = QLabel("Ajouter")
         label_description = QLabel("Tu peux ajouter des amis grâce à leur nom")
 
-        recherche_qqn = QLineEdit()
-        recherche_qqn.setPlaceholderText("Tu peux ajouter des amis grâce à leur nom...")
+        self.recherche_qqn = QLineEdit()
+        self.recherche_qqn.setPlaceholderText("Tu peux ajouter des amis grâce à leur nom...")
         style = """QPushButton {
             background-color: #5865F2;
             color: white;
@@ -36,14 +38,26 @@ class InterfaceAjouterAmi(QWidget):
             border: none;
         }
         """
-        bouton_ajouter = BoutonCustom(texte="Envoyer demande", taille=(150, 30), style=style)
+        bouton_ajouter = BoutonCustom(texte="Envoyer demande", taille=(150, 30), style=style, custom_command=self.envoyer_demande)
         widget_recherche = QWidget()
         l = QHBoxLayout()
-        l.addWidget(recherche_qqn)
+        l.addWidget(self.recherche_qqn)
         l.addWidget(bouton_ajouter)
         widget_recherche.setLayout(l)
 
         self.layout.addWidget(label_ajouter)
         self.layout.addWidget(label_description)
         self.layout.addWidget(widget_recherche)
+
+    def envoyer_demande(self):
+        nom = self.recherche_qqn.text()
+        rep = self.gestionnaire_amis.demander_en_ami(nom_ami=nom)
+
+        if rep.get('status_code') == 404:
+            print("utilisateur introuvable")
+            return
+
+        elif rep.get('status_code') == 200:
+            print('Demande envoyée avec succès')
+            son_id = rep.get('receiver_id')
 

@@ -151,8 +151,8 @@ class InterfaceMessagerie(QWidget):
         self.interfaces.append(self.interface_amis)
         self.interface_amis.show()
 
-        self.interface_ajouter_amis = InterfaceAjouterAmi()
-        self.layout.addWidget(self.interface_ajouter_amis, 1, 2)
+        self.interface_ajouter_amis = InterfaceAjouterAmi(gestionnaire_amis=self.gestionnaire_amis)
+        self.layout.addWidget(self.interface_ajouter_amis, 1, 1)
         self.interfaces.append(self.interface_ajouter_amis)
         self.interface_ajouter_amis.hide()
 

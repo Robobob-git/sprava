@@ -101,6 +101,7 @@ class GestionAmis:
 
     def demander_en_ami(self, nom_ami:str=None, id_ami:int=None):
         if not nom_ami and not id_ami:
+            print("Veuillez renseigner le nom ou l'id le l'ami à ajouter")
             return
         if nom_ami:
             id_ami = self.gestion_utilisateurs.obtenir_id(nom_ami)
