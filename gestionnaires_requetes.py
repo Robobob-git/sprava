@@ -74,8 +74,7 @@ class GestionUtilisateurs:
         return
 
 class GestionAmis:
-    def __init__(self, user_id:int, token):
-        self.user_id = user_id
+    def __init__(self, token):
         self.token = token
 
         self.gestionnaire_de_requetes = GestionRequetes(token=self.token)

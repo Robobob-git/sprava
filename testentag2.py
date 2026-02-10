@@ -47,7 +47,7 @@ class Fenetre(QWidget):
         self.setWindowTitle("Avatar cliquable")
 
         layout = QVBoxLayout()
-        avatar = AvatarCirculaire(obtenir_vrai_chemin('images/accept2.png'), taille=100)
+        avatar = AvatarCirculaire(obtenir_vrai_chemin('images/accept.svg'), taille=100)
 
         layout.addWidget(avatar, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)

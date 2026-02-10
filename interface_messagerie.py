@@ -94,7 +94,7 @@ class InterfaceMessagerie(QWidget):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
-        self.gestionnaire_amis = GestionAmis(user_id=self.user_info.get('user_id'), token=self.token)
+        self.gestionnaire_amis = GestionAmis(token=self.token)
         amis_infos = self.gestionnaire_amis.obtenir_amis(toutes_infos=True)
         self.liste_amis = []
         if amis_infos:
@@ -158,7 +158,7 @@ class InterfaceMessagerie(QWidget):
         self.interfaces.append(self.interface_ajouter_amis)
         self.interface_ajouter_amis.hide()
 
-        self.interface_demandes = InterfaceDemandes()
+        self.interface_demandes = InterfaceDemandes(gestionnaire_amis=self.gestionnaire_amis)
         self.layout.addWidget(self.interface_demandes, 1, 1)
         self.interfaces.append(self.interface_demandes)
         self.interface_demandes.hide()

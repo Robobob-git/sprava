@@ -64,14 +64,15 @@ class FenetrePrincipale(QMainWindow):
 
 
 class BoutonCustom(QPushButton):
-    def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
+    def __init__(self, texte:str=None, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
         super().__init__()
         self.custom_custom_command = custom_command
         self.nouvelle_page = nouvelle_page
 
-        self.setText(texte)
         self.setFixedSize(*taille)
 
+        if texte:
+            self.setText(texte)
         
         if chemin_image:
             self.setIcon(QIcon(chemin_image))
