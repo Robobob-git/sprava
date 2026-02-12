@@ -1,40 +1,126 @@
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from dataclasses import dataclass
 
 from gestionnaires_requetes import GestionAmis
 from interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
 
-class InterfaceDemandes(QWidget):
-    def __init__(self, gestionnaire_amis):
+@dataclass
+class Demande:
+    nom: str
+    identifiant: int
+
+class InterfaceDemandesRecues(QWidget):
+    def __init__(self, gestionnaire_utilisateurs, gestionnaire_amis):
         super().__init__()
 
+        self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
         self.gestionnaire_amis = gestionnaire_amis
 
         self.layout = QVBoxLayout()
 
-        self.demandes_recues = []
-        self.demandes_envoyees = []
+        self.demandes:list[Demande] = []
+        self.demandes = self._trouver_demandes_recues()
 
-    def _faire_ui_recues(self):
-        widget_recues = ListeElements()
-        for d in self.demandes_recues:
-            l = QHBoxLayout()
-            label = QLabel(d.nom)
-            bouton_acc = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/accept.svg"), custom_command=self.accepter_demande(d))
-            bouton_ref = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=self.refuser_demande(d))
+        self.ui = self._faire_ui()
 
-
-            widget_recues.ajouter_item(data=d.nom, widget=label)
-            
-    def accepter_demande(self, demande):
-        rep = self.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.id)
+    def _trouver_demandes_recues(self):
+        rep = self.gestionnaire_amis.obtenir_demandes_amis_recues() # La réponse est de la forme : {'status_code': 200, 'friend_requests_ids': [{'sender_id': 17, 'created_at': '2026-02-11T09:58:13'}]}
         print(rep)
-    def refuser_demande(self, demande):
-        pass
 
-    def changer_type(self):
-        pass
+        if rep.get('status_code') == 200:
+            if rep.get('friend_requests_ids') == []:
+                print("pas d'amis")
+                return []
+            liste_ids = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
+            liste_noms = self.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
+
+            return [Demande(nom, iden) for nom, iden in zip(liste_noms, liste_ids)]
+
+    def _faire_ui(self):
+        widget_recues = ListeElements()
+        for d in self.demandes:
+            w = QWidget()
+            l = QHBoxLayout()
+            w.setLayout(l)
+            label = QLabel(d.nom)
+            bouton_acc = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/accept.svg"), custom_command=lambda _, d=d: self.accepter_demande(d))
+            bouton_ref = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda _, d=d: self.refuser_demande(d))
+
+
+            widget_recues.ajouter_item(data=d, widget=w)
+        widget_recues.show()
+        self.layout.addWidget(widget_recues)
+        return widget_recues
+
+    def accepter_demande(self, demande):
+        rep = self.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.identifiant)
+        if rep.get("status_code") == 200:
+            self.demandes.remove(demande)
+            #ajouter l'ami
+            self.update_ui()
+        else:
+            print(f"erreur lors de l'accpetation de {demande.nom}")
+
+    def refuser_demande(self, demande):
+        rep = self.gestionnaire_amis.refuser_demande_ami(nom_ami=demande.nom)
+        if rep.get("status_code") == 200:
+            self.demandes.remove(demande)
+            self.update_ui()
+        else:
+            print(f"erreur lors de la rejection de la demande de {demande.nom}")
+
+    def update_ui(self):
+        '''On supprime le widget pour le raffraichir'''
+        self.layout.removeWidget(self.ui)
+        self.ui.setParent(None)
+        self.ui.deleteLater()
+
+        self.ui = self._faire_ui
+
+class InterfaceDemandesEnvoyees(QWidget):
+    def __init__(self, gestionnaire_utilisateurs, gestionnaire_amis):
+        super().__init__()
+
+        self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
+        self.gestionnaire_amis = gestionnaire_amis
+
+        self.layout = QVBoxLayout()
+
+        self.demandes = []
+        self.ui = self._faire_ui()
+    
+    def _faire_ui(self):
+        widget_envoyees = ListeElements()
+        for d in self.demandes:
+            w = QWidget()
+            l = QHBoxLayout()
+            w.setLayout(l)
+            label = QLabel(d.nom)
+            bouton_annuler = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda _, d=d: self.annuler_demande(d))
+        
+            widget_envoyees.ajouter_item(data=d, widget=w)
+        widget_envoyees.show()
+        self.layout.addWidget(widget_envoyees)
+        return widget_envoyees
+    
+    def annuler_demande(self, demande):
+        rep = self.gestionnaire_amis.annuler_demande_ami(nom_ami=demande.nom)
+        if rep.get("status_code") == 200:
+            self.demandes.remove(demande)
+            self.update_ui()
+        else:
+            print(f"erreur lors de l'annulation de la demande pour {demande.nom}")
+
+    def update_ui(self):
+        '''On supprime le widget pour le raffraichir'''
+        self.layout.removeWidget(self.ui)
+        self.ui.setParent(None)
+        self.ui.deleteLater()
+
+        self.ui = self._faire_ui
+        
 
         

@@ -51,6 +51,9 @@ class GestionUtilisateurs:
         return rep.get("username")
     
     def obtenir_noms(self, ids:list[int]) -> list[str]:
+        if ids == []:
+            print("La liste d'ids est vide pour obtenir_noms")
+            return
         ids_amis = self.obtenir_infos(ids=ids)
         return [user.get('username') for user in ids_amis]
 
@@ -113,6 +116,7 @@ class GestionAmis:
     def obtenir_demandes_amis_recues(self):
         rep = self.gestionnaire_de_requetes.faire_requete(url="/me/friend_requests", type_de_r='get')
         print(rep)
+        return rep
 
     def accepter_demande_ami(self, nom_ami:str=None, id_ami:int=None):
         if not nom_ami and id_ami:
@@ -125,12 +129,14 @@ class GestionAmis:
         print(rep)
         return rep
 
-    def annuler_demande_ami(self, nom_ami):
-        self.gestionnaire_de_requetes.faire_requete(url=f"/me/cancel_friend_request/{nom_ami}", type_de_r='get')
+    def annuler_demande_ami(self, nom_ami:str):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/cancel_friend_request/{nom_ami}", type_de_r='get')
+        return rep
 
-    def refuser_demande_ami(self, nom_ami):
-        self.gestionnaire_de_requetes.faire_requete(url=f"/me/reject_friend_request/{nom_ami}", type_de_r='get')
-    
+    def refuser_demande_ami(self, nom_ami:str):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/reject_friend_request/{nom_ami}", type_de_r='get')
+        return rep
+
     def enlever_ami(self, nom_ami:str=None, id_ami:int=None):
         if not nom_ami and not id_ami:
             return

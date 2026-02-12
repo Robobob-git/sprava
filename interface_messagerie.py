@@ -7,9 +7,9 @@ from autre_fonctions import obtenir_vrai_chemin
 from interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
 from interface_amis import InterfaceAmis
 from interface_ajouter_ami import InterfaceAjouterAmi
-from interface_demandes import InterfaceDemandes
+from interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
 
-from gestionnaires_requetes import GestionAmis
+from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 from amis import Ami, WidgetAmi
 
 class WidgetExtraBouton(QWidget):
@@ -94,6 +94,7 @@ class InterfaceMessagerie(QWidget):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
+        self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)
         amis_infos = self.gestionnaire_amis.obtenir_amis(toutes_infos=True)
         self.liste_amis = []
@@ -158,10 +159,14 @@ class InterfaceMessagerie(QWidget):
         self.interfaces.append(self.interface_ajouter_amis)
         self.interface_ajouter_amis.hide()
 
-        self.interface_demandes = InterfaceDemandes(gestionnaire_amis=self.gestionnaire_amis)
-        self.layout.addWidget(self.interface_demandes, 1, 1)
-        self.interfaces.append(self.interface_demandes)
-        self.interface_demandes.hide()
+        self.interface_demandes_recues = InterfaceDemandesRecues(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
+        self.layout.addWidget(self.interface_demandes_recues, 1, 1)
+        self.interfaces.append(self.interface_demandes_recues)
+        self.interface_demandes_recues.hide()
+        self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
+        self.layout.addWidget(self.interface_demandes_envoyees, 1, 1)
+        self.interfaces.append(self.interface_demandes_envoyees)
+        self.interface_demandes_envoyees.hide()
 
         self.interface_active = self.interface_amis
 
@@ -208,9 +213,10 @@ class InterfaceMessagerie(QWidget):
         bouton_tous.setChecked(True)
 
         layout_amis.addWidget(label_logo_amis)
-        layout_amis.addWidget(groupe_boutons_amis)
+        layout_amis.addWidget(groupe_bouton_amis)
         self.categorie_amis = QWidget()
         self.categorie_amis.setLayout(layout_amis)
+
 
 
         layout_demandes = QHBoxLayout()
@@ -218,6 +224,8 @@ class InterfaceMessagerie(QWidget):
         bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_recues))
         bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_envoyees))
         groupe_boutons_demandes = GroupeBoutons([bouton_recues, bouton_envoyees])
+        bouton_recues.setChecked(True)
+        
         layout_demandes.addWidget(label_logo_demandes)
         layout_demandes.addWidget(groupe_boutons_demandes)
         self.categorie_demandes = QWidget()
@@ -238,6 +246,7 @@ class InterfaceMessagerie(QWidget):
             self.changer_interface(self.interface_amis)
         elif data == "bouton_demandes":
             self.ligne_categorie.changer_categorie(self.categorie_demandes)
+            self.changer_interface(self.interface_demandes_recues)
 
     def contact_clique(self, item):
         ami = item.data(Qt.ItemDataRole.UserRole)
