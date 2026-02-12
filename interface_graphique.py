@@ -266,6 +266,9 @@ class LigneCategorie(QWidget):
                 return
 
             if categorie in self.liste_categories:
+                if self.categorie_actuelle:
+                    self.categorie_actuelle.hide()
+
                 categorie.show()
                 self.categorie_actuelle = categorie
             else:

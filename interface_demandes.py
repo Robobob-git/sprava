@@ -51,7 +51,6 @@ class InterfaceDemandesRecues(QWidget):
 
 
             widget_recues.ajouter_item(data=d, widget=w)
-        widget_recues.show()
         self.layout.addWidget(widget_recues)
         return widget_recues
 
@@ -102,7 +101,6 @@ class InterfaceDemandesEnvoyees(QWidget):
             bouton_annuler = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda _, d=d: self.annuler_demande(d))
         
             widget_envoyees.ajouter_item(data=d, widget=w)
-        widget_envoyees.show()
         self.layout.addWidget(widget_envoyees)
         return widget_envoyees
     

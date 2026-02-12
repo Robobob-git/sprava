@@ -187,7 +187,7 @@ class InterfaceMessagerie(QWidget):
 
         layout_amis = QHBoxLayout()
         label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends.png"))
-        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=self.changer_interface(self.interface_amis))
+        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_amis))
         style = """QPushButton {
             background-color: #5865F2;
             color: white;
@@ -208,7 +208,7 @@ class InterfaceMessagerie(QWidget):
             border: none;
         }
         """
-        bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=self.changer_interface(self.interface_ajouter_amis))
+        bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_ajouter_amis))
         groupe_bouton_amis = GroupeBoutons([bouton_tous, bouton_ajouter])
         bouton_tous.setChecked(True)
 
@@ -221,11 +221,11 @@ class InterfaceMessagerie(QWidget):
 
         layout_demandes = QHBoxLayout()
         label_logo_demandes = TexteEtImage(texte="Demandes", chemin_image=obtenir_vrai_chemin("images/demandes.svg"))
-        bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_recues))
-        bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=self.changer_interface(self.interface_demandes_envoyees))
+        bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_recues))
+        bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_envoyees))
         groupe_boutons_demandes = GroupeBoutons([bouton_recues, bouton_envoyees])
         bouton_recues.setChecked(True)
-        
+
         layout_demandes.addWidget(label_logo_demandes)
         layout_demandes.addWidget(groupe_boutons_demandes)
         self.categorie_demandes = QWidget()
