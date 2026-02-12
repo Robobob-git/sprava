@@ -133,8 +133,9 @@ class GestionAmis:
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/cancel_friend_request/{nom_ami}", type_de_r='get')
         return rep
 
-    def refuser_demande_ami(self, nom_ami:str):
-        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/reject_friend_request/{nom_ami}", type_de_r='get')
+    def refuser_demande_ami(self, id_ami:int):
+        body = {"sender_id": id_ami}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/reject_friend_request", type_de_r='delete', body=body)
         return rep
 
     def enlever_ami(self, nom_ami:str=None, id_ami:int=None):

@@ -76,7 +76,7 @@ class BoutonCustom(QPushButton):
         
         if chemin_image:
             self.setIcon(QIcon(chemin_image))
-            self.setIconSize(taille)
+            self.setIconSize(QSize(*taille))
         
         self.setStyleSheet(f"""
         QPushButton {{

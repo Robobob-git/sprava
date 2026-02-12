@@ -20,9 +20,11 @@ class InterfaceDemandesRecues(QWidget):
         self.gestionnaire_amis = gestionnaire_amis
 
         self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
         self.demandes:list[Demande] = []
         self.demandes = self._trouver_demandes_recues()
+        print(f'self.demandes : {self.demandes}')
 
         self.ui = self._faire_ui()
 
@@ -46,11 +48,13 @@ class InterfaceDemandesRecues(QWidget):
             l = QHBoxLayout()
             w.setLayout(l)
             label = QLabel(d.nom)
-            bouton_acc = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/accept.svg"), custom_command=lambda _, d=d: self.accepter_demande(d))
-            bouton_ref = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda _, d=d: self.refuser_demande(d))
+            bouton_acc = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/accept.svg"), custom_command=lambda d=d: self.accepter_demande(d))
+            bouton_ref = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda d=d: self.refuser_demande(d))
 
-
-            widget_recues.ajouter_item(data=d, widget=w)
+            l.addWidget(label)
+            l.addWidget(bouton_acc)
+            l.addWidget(bouton_ref)
+            widget_recues.ajouter_item(data="", widget=w)
         self.layout.addWidget(widget_recues)
         return widget_recues
 
@@ -64,7 +68,8 @@ class InterfaceDemandesRecues(QWidget):
             print(f"erreur lors de l'accpetation de {demande.nom}")
 
     def refuser_demande(self, demande):
-        rep = self.gestionnaire_amis.refuser_demande_ami(nom_ami=demande.nom)
+        rep = self.gestionnaire_amis.refuser_demande_ami(id_ami=demande.identifiant)
+        print(f'la rep : {rep}')
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
             self.update_ui()
@@ -87,6 +92,7 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.gestionnaire_amis = gestionnaire_amis
 
         self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
 
         self.demandes = []
         self.ui = self._faire_ui()
@@ -98,9 +104,11 @@ class InterfaceDemandesEnvoyees(QWidget):
             l = QHBoxLayout()
             w.setLayout(l)
             label = QLabel(d.nom)
-            bouton_annuler = BoutonCustom(taille=(50, 50), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda _, d=d: self.annuler_demande(d))
-        
-            widget_envoyees.ajouter_item(data=d, widget=w)
+            bouton_annuler = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda d=d: self.annuler_demande(d))
+
+            l.addWidget(label)
+            l.addWidget(bouton_annuler)
+            widget_envoyees.ajouter_item(data="", widget=w)
         self.layout.addWidget(widget_envoyees)
         return widget_envoyees
     

@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from autre_fonctions import obtenir_vrai_chemin
@@ -32,58 +32,6 @@ class WidgetExtraBouton(QWidget):
 
         layout.addStretch()
 
-
-
-
-
-'''class ColonneContacts(QWidget):
-    def __init__(self, amis:list[Ami]):
-        super().__init__()
-
-        self.amis = amis
-
-        self.layout = QVBoxLayout()
-        self.liste_contacts = QListWidget()
-        self.liste_contacts.setStyleSheet("""
-            QListWidget {
-                background-color: #1e1f22;
-                border: none;
-                outline: none;
-            }
-            QListWidget::item {
-                border-bottom: 1px solid #2b2d31;
-                outline: none;
-            }
-            QListWidget::item:hover {
-                background-color: #292b2f;
-            }
-            QListWidget::item:selected {
-                background-color: #2f3136;
-            }
-        """)
-
-        if len(self.amis) != 0:
-            for ami in self.amis:
-                item = QListWidgetItem(self.liste_contacts)
-                item.setSizeHint(QSize(280, 60))
-                item.setData(Qt.ItemDataRole.UserRole, ami)
-
-                widget_ami = WidgetAmi(ami)
-                self.liste_contacts.setItemWidget(item, widget_ami)
-
-            self.liste_contacts.itemClicked.connect(self.contact_clique)
-
-        self.layout.addWidget(self.liste_contacts)
-        self.setLayout(self.layout)
-
-        
-        def contact_clique(self, item):
-            ami = item.data(Qt.ItemDataRole.UserRole)
-            print(f"Ami cliqué : {ami.username}")'''
-
-
-
-
 class InterfaceMessagerie(QWidget):
     def __init__(self, fenetre_principale:QMainWindow, user_info:dict, token:str):
         super().__init__()
@@ -101,8 +49,6 @@ class InterfaceMessagerie(QWidget):
         if amis_infos:
             self.liste_amis = [Ami(a) for a in amis_infos]
 
-        self.interface_active = None
-        self.interfaces = []
         self._faire_ui()
         
 
@@ -149,37 +95,25 @@ class InterfaceMessagerie(QWidget):
         self.layout.addWidget(widget_barre_laterale, 0, 0, 2, 1)
     
     def _faire_interfaces(self):
+        self.interface = QStackedWidget()
+
         self.interface_amis = InterfaceAmis(amis=self.liste_amis)
-        self.layout.addWidget(self.interface_amis, 1, 1)
-        self.interfaces.append(self.interface_amis)
-        self.interface_amis.show()
-
         self.interface_ajouter_amis = InterfaceAjouterAmi(gestionnaire_amis=self.gestionnaire_amis)
-        self.layout.addWidget(self.interface_ajouter_amis, 1, 1)
-        self.interfaces.append(self.interface_ajouter_amis)
-        self.interface_ajouter_amis.hide()
-
         self.interface_demandes_recues = InterfaceDemandesRecues(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
-        self.layout.addWidget(self.interface_demandes_recues, 1, 1)
-        self.interfaces.append(self.interface_demandes_recues)
-        self.interface_demandes_recues.hide()
         self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
-        self.layout.addWidget(self.interface_demandes_envoyees, 1, 1)
-        self.interfaces.append(self.interface_demandes_envoyees)
-        self.interface_demandes_envoyees.hide()
 
-        self.interface_active = self.interface_amis
+        self.interface.addWidget(self.interface_amis)
+        self.interface.addWidget(self.interface_ajouter_amis)
+        self.interface.addWidget(self.interface_demandes_recues)
+        self.interface.addWidget(self.interface_demandes_envoyees)
+
+        self.interface.setCurrentWidget(self.interface_amis)
 
     def changer_interface(self, interface):
-        if interface == self.interface_active:
+        if interface == self.interface:
             return
 
-        self.interface_active.hide()
-        if interface in self.interfaces:
-            interface.show()
-            self.interface_active = interface
-        else:
-            print(f"l'interface {interface} n'existe pas")
+        self.interface.setCurrentWidget(interface)
 
     def _faire_ligne_categorie(self):
         self.ligne_categorie = LigneCategorie()
