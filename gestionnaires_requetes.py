@@ -54,10 +54,14 @@ class GestionUtilisateurs:
         if ids == []:
             print("La liste d'ids est vide pour obtenir_noms")
             return
-        ids_amis = self.obtenir_infos(ids=ids)
+        ids_amis = self.obtenir_infos_multiples(ids=ids)
         return [user.get('username') for user in ids_amis]
 
-    def obtenir_infos(self, ids:list[int]) -> list:
+    def obtenir_infos(self, son_id:int):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user?user_id={son_id}", type_de_r="get")
+        return rep
+
+    def obtenir_infos_multiples(self, ids:list[int]) -> list:
         if ids == []:
             print("La liste d'ids est vide pour obtenir_infos")
             return
@@ -95,7 +99,7 @@ class GestionAmis:
         elif seulement_noms and not toutes_infos and not seulement_ids:
             return self.gestion_utilisateurs.obtenir_noms(ids=friends_ids)
         elif toutes_infos and not seulement_ids and not seulement_noms:
-            return self.gestion_utilisateurs.obtenir_infos(ids=friends_ids)
+            return self.gestion_utilisateurs.obtenir_infos_multiples(ids=friends_ids)
 
         else:
             print("Informations en confliction sur l'appel obtenir_amis")

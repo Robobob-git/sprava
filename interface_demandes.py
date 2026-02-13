@@ -1,7 +1,9 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from dataclasses import dataclass
+
+from amis import Ami
 
 from gestionnaires_requetes import GestionAmis
 from interface_graphique import ListeElements, BoutonCustom
@@ -18,6 +20,8 @@ class InterfaceDemandesRecues(QWidget):
 
         self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
         self.gestionnaire_amis = gestionnaire_amis
+
+        self.ami_accept = pyqtSignal()
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -62,7 +66,14 @@ class InterfaceDemandesRecues(QWidget):
         rep = self.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.identifiant)
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
-            #ajouter l'ami
+
+            infos = self.gestionnaire_utilisateurs.obtenir_infos(son_id=rep.get('sender_id'))
+            print(f'infos ami : {infos}')
+            ami = Ami(ami_infos=infos)
+
+            self.ami_accept.emit(ami)
+
+
             self.update_ui()
         else:
             print(f"erreur lors de l'accpetation de {demande.nom}")

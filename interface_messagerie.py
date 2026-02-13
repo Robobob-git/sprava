@@ -96,6 +96,7 @@ class InterfaceMessagerie(QWidget):
     
     def _faire_interfaces(self):
         self.interface = QStackedWidget()
+        self.layout.addWidget(self.interface, 1, 1)
 
         self.interface_amis = InterfaceAmis(amis=self.liste_amis)
         self.interface_ajouter_amis = InterfaceAjouterAmi(gestionnaire_amis=self.gestionnaire_amis)
@@ -104,10 +105,16 @@ class InterfaceMessagerie(QWidget):
 
         self.interface.addWidget(self.interface_amis)
         self.interface.addWidget(self.interface_ajouter_amis)
+
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
+        self.interface_demandes_recues.ami_accept.connect(self.new_friend)
 
         self.interface.setCurrentWidget(self.interface_amis)
+
+    def new_friend(self, friend:Ami):
+        self.liste_amis.append(friend)
+
 
     def changer_interface(self, interface):
         if interface == self.interface:
@@ -116,7 +123,7 @@ class InterfaceMessagerie(QWidget):
         self.interface.setCurrentWidget(interface)
 
     def _faire_ligne_categorie(self):
-        self.ligne_categorie = LigneCategorie()
+        self.ligne_categorie = QStackedWidget()
 
 
         layout_amis = QHBoxLayout()
@@ -165,9 +172,11 @@ class InterfaceMessagerie(QWidget):
         self.categorie_demandes = QWidget()
         self.categorie_demandes.setLayout(layout_demandes)
 
-        self.ligne_categorie.ajouter_categorie(self.categorie_amis)
-        self.ligne_categorie.ajouter_categorie(self.categorie_demandes)
-        self.ligne_categorie.changer_categorie(self.categorie_amis)
+
+
+        self.ligne_categorie.addWidget(self.categorie_amis)
+        self.ligne_categorie.addWidget(self.categorie_demandes)
+        self.ligne_categorie.setCurrentWidget(self.categorie_amis)
 
         self.layout.addWidget(self.ligne_categorie, 0, 1)
 
@@ -176,10 +185,10 @@ class InterfaceMessagerie(QWidget):
         print(f"Extra bouton cliqué : {data}")
 
         if data == "bouton_ami":
-            self.ligne_categorie.changer_categorie(self.categorie_amis)
+            self.ligne_categorie.setCurrentWidget(self.categorie_amis)
             self.changer_interface(self.interface_amis)
         elif data == "bouton_demandes":
-            self.ligne_categorie.changer_categorie(self.categorie_demandes)
+            self.ligne_categorie.setCurrentWidget(self.categorie_demandes)
             self.changer_interface(self.interface_demandes_recues)
 
     def contact_clique(self, item):
