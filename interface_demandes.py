@@ -15,13 +15,14 @@ class Demande:
     identifiant: int
 
 class InterfaceDemandesRecues(QWidget):
+    ami_accept = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
+
     def __init__(self, gestionnaire_utilisateurs, gestionnaire_amis):
         super().__init__()
 
         self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
         self.gestionnaire_amis = gestionnaire_amis
 
-        self.ami_accept = pyqtSignal()
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -67,7 +68,7 @@ class InterfaceDemandesRecues(QWidget):
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
 
-            infos = self.gestionnaire_utilisateurs.obtenir_infos(son_id=rep.get('sender_id'))
+            infos = self.gestionnaire_utilisateurs.obtenir_infos(son_id=rep.get('new_friend_id'))
             print(f'infos ami : {infos}')
             ami = Ami(ami_infos=infos)
 

@@ -71,10 +71,9 @@ class InterfaceMessagerie(QWidget):
         widget_barre_laterale = QWidget()
         layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
 
-
-        widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
+        self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
         for ami in self.liste_amis:
-            widget_colonne_contacts.ajouter_item(data=ami, widget=WidgetAmi(ami))
+            self.widget_colonne_contacts.ajouter_item(data=ami, widget=WidgetAmi(ami))
 
 
         widget_logo = QLabel()
@@ -90,7 +89,7 @@ class InterfaceMessagerie(QWidget):
         
 
         layout_barre_laterale.addWidget(widget_liste_extra_boutons)
-        layout_barre_laterale.addWidget(widget_colonne_contacts)
+        layout_barre_laterale.addWidget(self.widget_colonne_contacts)
 
         self.layout.addWidget(widget_barre_laterale, 0, 0, 2, 1)
     
@@ -114,6 +113,8 @@ class InterfaceMessagerie(QWidget):
 
     def new_friend(self, friend:Ami):
         self.liste_amis.append(friend)
+        self.interface_amis.ajouter_ami(friend)
+        self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend))
 
 
     def changer_interface(self, interface):
