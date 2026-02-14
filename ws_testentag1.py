@@ -16,11 +16,6 @@ def handle_ws_event(event):
 
 
 def main():
-    import os
-    os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
-
-
     # --- Connexion et récupération token ---
     gestionnaire_connections = GestionConnexions()
     rep1 = gestionnaire_connections.connexion(mail="p1@mail.com", mdp="p1")

@@ -156,6 +156,7 @@ class InterfaceMessagerie(QWidget):
 
         layout_amis.addWidget(label_logo_amis)
         layout_amis.addWidget(groupe_bouton_amis)
+        layout_amis.addStretch()
         self.categorie_amis = QWidget()
         self.categorie_amis.setLayout(layout_amis)
 
@@ -170,6 +171,7 @@ class InterfaceMessagerie(QWidget):
 
         layout_demandes.addWidget(label_logo_demandes)
         layout_demandes.addWidget(groupe_boutons_demandes)
+        layout_demandes.addStretch()
         self.categorie_demandes = QWidget()
         self.categorie_demandes.setLayout(layout_demandes)
 
