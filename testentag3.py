@@ -1,53 +1,33 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QSizePolicy, QToolButton
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QSize
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QToolButton, QVBoxLayout, QMenu
+)
+from PyQt6.QtGui import QAction
 
-from autre_fonctions import obtenir_vrai_chemin
-
-
-class BoutonCustom():
-    def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False, layout_horizontal:bool=False):
+class Window(QWidget):
+    def __init__(self):
         super().__init__()
-        self.custom_custom_command = custom_command
-        self.nouvelle_page = nouvelle_page
-        
-        if not layout_horizontal:
-            bouton = QPushButton()
-        else:
-            bouton = QToolButton()
+        self.setWindowTitle("Menu propre")
+        self.resize(300, 200)
 
-        bouton.setText(texte)
-        bouton.setFixedSize(*taille)
+        layout = QVBoxLayout(self)
 
-        
-        if chemin_image:
-            bouton.setIcon(QIcon(chemin_image))
-            bouton.setIconSize(taille)
+        self.button = QToolButton()
+        self.button.setText("⋯")
 
-            if not layout_horizontal:
-                bouton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        
-        bouton.setStyleSheet(f"""
-        QPushButton {{
-            background-color: #5865F2;
-            border-radius: 8px;
-            color: white;
-            padding: {marge}px;   /* espace entre bord et contenu */
-        }}
-        QPushButton:hover {{
-            background-color: #4752C4;
-        }}
-        """)
+        menu = QMenu(self)
 
-        if style:
-            bouton.setStyleSheet(style)
-            
-        # Ajoute un évènement quand on clique sur le bouton
-        bouton.clicked.connect(self.on_bouton_clicked)
+        menu.addAction("Démarrer un appel vidéo")
+        menu.addAction("Démarrer un appel vocal")
+        menu.addSeparator()
+        menu.addAction("Retirer l'ami")
 
-        return bouton
+        self.button.setMenu(menu)
+        self.button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 
-    def on_bouton_clicked(self):
-        if self.custom_custom_command:
-            self.custom_custom_command()
+        layout.addWidget(self.button)
+
+app = QApplication(sys.argv)
+window = Window()
+window.show()
+sys.exit(app.exec())

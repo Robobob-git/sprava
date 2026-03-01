@@ -122,6 +122,11 @@ class GestionAmis:
         print(rep)
         return rep
 
+    def obtenir_demandes_amis_envoyees(self):
+        rep = self.gestionnaire_de_requetes.faire_requete(url='/me/sent_friend_requests', type_de_r='get')
+        print(rep)
+        return rep
+
     def accepter_demande_ami(self, nom_ami:str=None, id_ami:int=None):
         if not nom_ami and id_ami:
             return

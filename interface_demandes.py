@@ -106,9 +106,14 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.demandes = []
+        self.demandes = self._trouver_demandes_envoyees()
         self.ui = self._faire_ui()
     
+    def _trouver_demandes_envoyees(self):
+        rep = self.gestionnaire_amis.obtenir_demandes_amis_envoyees()
+        print(rep)
+        return []
+
     def _faire_ui(self):
         widget_envoyees = ListeElements()
         for d in self.demandes:
