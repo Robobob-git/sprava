@@ -1,174 +1,112 @@
 import sys
-from dataclasses import dataclass
-
-from PyQt6.QtCore import Qt, QAbstractListModel, QModelIndex, QSize
 from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QVBoxLayout,
-    QListView,
-    QPushButton,
-    QStyledItemDelegate,
-    QStyle,
+    QApplication, QMainWindow, QWidget,
+    QVBoxLayout, QPushButton, QMenu, QLabel
 )
-from PyQt6.QtGui import QPainter
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QAction, QCursor
 
 
-# =========================
-# 1️⃣ Donnée
-# =========================
-@dataclass
-class Personne:
-    nom: str
-    age: int
-
-
-# =========================
-# 2️⃣ Modèle
-# =========================
-class PersonneModel(QAbstractListModel):
-    def __init__(self, personnes=None):
+class MainWindow(QMainWindow):
+    def __init__(self):
         super().__init__()
-        self._personnes = personnes or []
+        self.setWindowTitle("Menu déroulant - Test PyQt6")
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: #1e1e1e;")
 
-    def rowCount(self, parent=QModelIndex()):
-        return len(self._personnes)
+        # Widget central
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-    def data(self, index, role):
-        if not index.isValid():
-            return None
+        # Label d'info
+        self.label = QLabel("Cliquez sur le bouton ⋮")
+        self.label.setStyleSheet("color: #aaaaaa; font-size: 14px; margin-bottom: 20px;")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.label)
 
-        personne = self._personnes[index.row()]
-
-        if role == Qt.ItemDataRole.DisplayRole:
-            return f"{personne.nom} ({personne.age} ans)"
-
-        if role == Qt.ItemDataRole.UserRole:
-            return personne
-
-        return None
-
-    def ajouter(self, personne):
-        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        self._personnes.append(personne)
-        self.endInsertRows()
-
-    def supprimer(self, row):
-        if 0 <= row < len(self._personnes):
-            self.beginRemoveRows(QModelIndex(), row, row)
-            self._personnes.pop(row)
-            self.endRemoveRows()
-
-
-# =========================
-# 3️⃣ Delegate (dessin custom)
-# =========================
-class PersonneDelegate(QStyledItemDelegate):
-    def paint(self, painter: QPainter, option, index):
-        painter.save()
-
-        rect = option.rect
-        texte = index.data(Qt.ItemDataRole.DisplayRole)
-
-        # Fond personnalisé
-        if option.state & QStyle.StateFlag.State_Selected:
-            painter.fillRect(rect, Qt.GlobalColor.darkGray)
-
-        elif option.state & QStyle.StateFlag.State_MouseOver:
-            painter.fillRect(rect, Qt.GlobalColor.gray)
-
-        else:
-            painter.fillRect(rect, Qt.GlobalColor.transparent)
-
-        # Texte
-        painter.drawText(
-            rect.adjusted(10, 0, 0, 0),
-            Qt.AlignmentFlag.AlignVCenter,
-            texte
-        )
-
-        painter.restore()
-
-    def sizeHint(self, option, index):
-        return QSize(120, 42)
-
-
-# =========================
-# 4️⃣ Liste custom style
-# =========================
-class ListeElementsView(QListView):
-    def __init__(self, parent=None, horizontal=False, custom_command=None):
-        super().__init__(parent)
-
-        self.setSpacing(2)
-
-        if horizontal:
-            self.setFlow(QListView.Flow.LeftToRight)
-            self.setWrapping(False)
-            self.setHorizontalScrollBarPolicy(
-                Qt.ScrollBarPolicy.ScrollBarAsNeeded
-            )
-            self.setVerticalScrollBarPolicy(
-                Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-            )
-
-        self.setStyleSheet("""
-            QListView {
-                background-color: #1e1f22;
+        # Bouton "trois points" comme dans l'image
+        self.menu_button = QPushButton("⋮")
+        self.menu_button.setFixedSize(36, 36)
+        self.menu_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        
+        self.menu_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2b2b2b;
+                color: #ffffff;
                 border: none;
+                border-radius: 18px;
+                font-size: 20px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3a3a3a;
+            }
+            QPushButton:pressed {
+                background-color: #444444;
+            }
+        """)
+        self.menu_button.clicked.connect(self.show_menu)
+        layout.addWidget(self.menu_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Création du menu déroulant
+        self.dropdown_menu = QMenu(self)
+        self.dropdown_menu.setStyleSheet("""
+            QMenu {
+                background-color: #2b2b2b;
+                border: 1px solid #3a3a3a;
+                border-radius: 8px;
+                padding: 6px 0px;
+                min-width: 220px;
+            }
+            QMenu::item {
+                color: #ffffff;
+                font-size: 14px;
+                padding: 10px 20px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                background-color: #3a3a3a;
+                border-radius: 4px;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #3a3a3a;
+                margin: 4px 10px;
             }
         """)
 
-        self.setMouseTracking(True)
+        # --- Actions du menu ---
 
-        if custom_command:
-            self.clicked.connect(custom_command)
+        # Action 1 : Démarrer un appel vidéo
+        action_video = QAction("Bloquer l'ami", self)
+        action_video.triggered.connect(lambda: self.on_action("Ami bloqué"))
+        self.dropdown_menu.addAction(action_video)
 
+        # Séparateur
+        self.dropdown_menu.addSeparator()
 
-# =========================
-# 5️⃣ Fenêtre principale
-# =========================
-class Fenetre(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("ListeElements version MVC - PyQt6")
+        # Action 2 : Retirer l'ami (en rouge)
+        action_retirer = QAction("Retirer l'ami", self)
+        action_retirer.triggered.connect(lambda: self.on_action("Ami retiré !"))
+        self.dropdown_menu.addAction(action_retirer)
 
-        layout = QVBoxLayout(self)
-
-        self.model = PersonneModel([
-            Personne("Alice", 25),
-            Personne("Bob", 30),
-        ])
-
-        self.liste = ListeElementsView()
-        self.liste.setModel(self.model)
-        self.liste.setItemDelegate(PersonneDelegate())
-
-        bouton_ajouter = QPushButton("Ajouter")
-        bouton_supprimer = QPushButton("Supprimer sélection")
-
-        bouton_ajouter.clicked.connect(
-            lambda: self.model.ajouter(Personne("Nouvelle", 20))
+    def show_menu(self):
+        """Affiche le menu sous le bouton."""
+        button_pos = self.menu_button.mapToGlobal(
+            QPoint(0, self.menu_button.height() + 5)
         )
+        self.dropdown_menu.exec(button_pos)
 
-        bouton_supprimer.clicked.connect(self.supprimer)
-
-        layout.addWidget(self.liste)
-        layout.addWidget(bouton_ajouter)
-        layout.addWidget(bouton_supprimer)
-
-    def supprimer(self):
-        index = self.liste.currentIndex()
-        if index.isValid():
-            self.model.supprimer(index.row())
+    def on_action(self, message):
+        """Callback générique pour les actions."""
+        self.label.setText(f"✅ Action : {message}")
+        self.label.setStyleSheet("color: #57f287; font-size: 14px; margin-bottom: 20px;")
 
 
-# =========================
-# 6️⃣ Lancement
-# =========================
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    fenetre = Fenetre()
-    fenetre.resize(300, 300)
-    fenetre.show()
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec())

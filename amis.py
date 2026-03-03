@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
@@ -17,6 +17,8 @@ class Ami:
         '''self.status = "online"'''
 
 class WidgetAmi(QWidget):
+    ami_block = pyqtSignal(Ami) # On le crée ici parce que les pyqtSignal sont bizzares
+
     def __init__(self, ami:Ami, detaillee:bool=False):
         super().__init__()
         self.ami = ami

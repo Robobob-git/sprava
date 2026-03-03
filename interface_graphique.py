@@ -273,7 +273,50 @@ class LigneCategorie(QWidget):
                 self.categorie_actuelle = categorie
             else:
                 print(f"Catégorie {categorie} innexistante")
-        
+
+class MenuDeroulable(QMenu):
+    def __init__(self, bouton:QPushButton, actions:list[QAction], parent=None):
+        super().__init__(parent)
+
+        self.bouton = bouton
+
+        self.setStyleSheet("""
+            QMenu {
+                background-color: #2b2b2b;
+                border: 1px solid #3a3a3a;
+                border-radius: 8px;
+                padding: 6px 0px;
+                min-width: 220px;
+            }
+            QMenu::item {
+                color: #ffffff;
+                font-size: 14px;
+                padding: 10px 20px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                background-color: #3a3a3a;
+                border-radius: 4px;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #3a3a3a;
+                margin: 4px 10px;
+            }
+        """)
+
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.clicked.connect(self.show_menu)
+
+    
+    def show_menu(self):
+        button_pos = self.menu_button.mapToGlobal(
+            QPoint(0, self.menu_button.height() + 5)
+        )
+        self.dropdown_menu.exec(button_pos)
+
+
+
 def main():
     app = QApplication(sys.argv)
     app.setStyle("fusion")

@@ -6,9 +6,9 @@ from autre_fonctions import obtenir_vrai_chemin
 
 
 def main():
-    '''import os
+    import os
     os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
 
     gestionnaire_connections = GestionConnexions()
 
@@ -34,6 +34,9 @@ def main():
         gestionnaire_amis2.demander_en_ami("p1")
         demandes_de_amis1 = gestionnaire_amis1.obtenir_demandes_amis_recues()
         print(f'amis 1 a : {demandes_de_amis1}')
+
+        gestionnaire_amis1.obtenir_demandes_amis_envoyees()
+        gestionnaire_amis2.obtenir_demandes_amis_envoyees()
         #gestionnaire_amis1.accepter_demande_ami("p2")
 
     if id_amis1 != []:
