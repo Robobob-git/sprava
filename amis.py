@@ -1,8 +1,8 @@
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
-from interface_graphique import BoutonCustom
+from interface_graphique import BoutonCustom, MenuDeroulable
 from autre_fonctions import obtenir_vrai_chemin
 
 class Ami:
@@ -17,6 +17,7 @@ class Ami:
         '''self.status = "online"'''
 
 class WidgetAmi(QWidget):
+    ami_remove = pyqtSignal(Ami)
     ami_block = pyqtSignal(Ami) # On le crée ici parce que les pyqtSignal sont bizzares
 
     def __init__(self, ami:Ami, detaillee:bool=False):
@@ -48,15 +49,37 @@ class WidgetAmi(QWidget):
         self.layout.addStretch()
 
         if self.detaillee:
-            bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami: self.lancer_conv(a))
-            bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"), custom_command=self.menu)
-            self.layout.addWidget(bouton_message)
-            self.layout.addWidget(bouton_menu)
+            self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami: self.lancer_conv(a))
+
+
+            action_lancer_conv = QAction("Lancer une conversation")
+            action_lancer_conv.triggered.connect(lambda : self.lancer_conv)
+            action_retirer = QAction("Retirer l'ami")
+            action_retirer.triggered.connect(lambda : self.retirer_ami)
+            action_bloquer = QAction("Bloquer l'ami")
+            action_bloquer.triggered.connect(lambda : self.bloquer_ami)
+            self.menu = MenuDeroulable(actions=[action_lancer_conv, action_retirer, action_bloquer], pos_separateurs=[1])
+
+            self.bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
+            self.bouton_menu.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            self.layout.addWidget(self.bouton_message)
+            self.layout.addWidget(self.bouton_menu)
+
 
 
     
     def lancer_conv(self, ami):
         print(f'bonjour amongus : {ami}')
-    
-    def menu(self):
-        print('brrrr')
+
+
+    def afficher_menu(self):
+        bouton_pos = self.bouton_menu.mapToGlobal(QPoint(0, self.bouton_menu.height() + 5))
+        self.menu.exec(bouton_pos)
+
+    def retirer_ami(self, ami):
+        print(f'retirer amongus : {ami}')
+        pass
+
+    def bloquer_ami(self, ami):
+        print(f'bloquer amongus : {ami}')
+        pass

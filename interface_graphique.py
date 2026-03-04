@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
 from autre_fonctions import obtenir_vrai_chemin
 
@@ -275,10 +275,8 @@ class LigneCategorie(QWidget):
                 print(f"Catégorie {categorie} innexistante")
 
 class MenuDeroulable(QMenu):
-    def __init__(self, bouton:QPushButton, actions:list[QAction], parent=None):
+    def __init__(self, actions:list, pos_separateurs:list[int]=None, parent=None):
         super().__init__(parent)
-
-        self.bouton = bouton
 
         self.setStyleSheet("""
             QMenu {
@@ -305,15 +303,11 @@ class MenuDeroulable(QMenu):
             }
         """)
 
-        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.clicked.connect(self.show_menu)
+        for i, action in enumerate(actions):
+            if i in pos_separateurs:
+                self.addSeparator()
+            self.addAction(action)
 
-    
-    def show_menu(self):
-        button_pos = self.menu_button.mapToGlobal(
-            QPoint(0, self.menu_button.height() + 5)
-        )
-        self.dropdown_menu.exec(button_pos)
 
 
 
