@@ -108,6 +108,43 @@ class BoutonCustom(QPushButton):
         if self.custom_custom_command:
             self.custom_custom_command()
 
+class BoutonMenu(QToolButton):
+    def __init__(self, menu:QMenu, texte:str=None, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None):
+        super().__init__()
+
+        self.setFixedSize(*taille)
+
+        if texte:
+            self.setText(texte)
+        
+        if chemin_image:
+            self.setIcon(QIcon(chemin_image))
+            self.setIconSize(QSize(*taille))
+
+        self.setStyleSheet(f"""
+            QToolButton {{                          
+                background-color: #2f3136;
+                color: #ffffff;
+                border-radius: 6px;
+                border: none;
+                padding: {marge}px;
+                font-size: 13px;
+            }}
+            QToolButton:hover {{
+                background-color: #404249;
+            }}
+            QToolButton::menu-indicator {{
+                image: none;                        
+            }}
+        """)
+        if style:
+            self.setStyleSheet(style)
+
+
+        self.setMenu(menu)
+        self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)   
+
 class BoutonCustomVetical(QToolButton):
     def __init__(self, texte:str, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):
         super().__init__()
@@ -273,43 +310,6 @@ class LigneCategorie(QWidget):
                 self.categorie_actuelle = categorie
             else:
                 print(f"Catégorie {categorie} innexistante")
-
-class MenuDeroulable(QMenu):
-    def __init__(self, actions:list, pos_separateurs:list[int]=None, parent=None):
-        super().__init__(parent)
-
-        self.setStyleSheet("""
-            QMenu {
-                background-color: #2b2b2b;
-                border: 1px solid #3a3a3a;
-                border-radius: 8px;
-                padding: 6px 0px;
-                min-width: 220px;
-            }
-            QMenu::item {
-                color: #ffffff;
-                font-size: 14px;
-                padding: 10px 20px;
-                background-color: transparent;
-            }
-            QMenu::item:selected {
-                background-color: #3a3a3a;
-                border-radius: 4px;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #3a3a3a;
-                margin: 4px 10px;
-            }
-        """)
-
-        for i, action in enumerate(actions):
-            if i in pos_separateurs:
-                self.addSeparator()
-            self.addAction(action)
-
-
-
 
 def main():
     app = QApplication(sys.argv)

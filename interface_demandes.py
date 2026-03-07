@@ -39,7 +39,6 @@ class InterfaceDemandesRecues(QWidget):
 
         if rep.get('status_code') == 200:
             if rep.get('friend_requests_ids') == []:
-                print("pas d'amis")
                 return []
             liste_ids = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
             liste_noms = self.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
@@ -111,8 +110,13 @@ class InterfaceDemandesEnvoyees(QWidget):
     
     def _trouver_demandes_envoyees(self):
         rep = self.gestionnaire_amis.obtenir_demandes_amis_envoyees()
-        print(rep)
-        return []
+        if rep.get('status_code') == 200:
+            if rep.get('sent_friend_requests_ids') == []:
+                return []
+            liste_ids = [fr.get('receiver_id') for fr in rep.get('sent_friend_requests_ids')]
+            liste_noms = self.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
+            
+            return [Demande(nom, iden) for nom, iden in zip(liste_noms, liste_ids)]
 
     def _faire_ui(self):
         widget_envoyees = ListeElements()

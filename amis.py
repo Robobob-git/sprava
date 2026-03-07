@@ -1,8 +1,8 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
-from interface_graphique import BoutonCustom, MenuDeroulable
+from interface_graphique import BoutonCustom, BoutonMenu
 from autre_fonctions import obtenir_vrai_chemin
 
 class Ami:
@@ -17,8 +17,8 @@ class Ami:
         '''self.status = "online"'''
 
 class WidgetAmi(QWidget):
-    ami_remove = pyqtSignal(Ami)
-    ami_block = pyqtSignal(Ami) # On le crée ici parce que les pyqtSignal sont bizzares
+    ami_remove = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
+    ami_block = pyqtSignal(Ami)
 
     def __init__(self, ami:Ami, detaillee:bool=False):
         super().__init__()
@@ -51,35 +51,61 @@ class WidgetAmi(QWidget):
         if self.detaillee:
             self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami: self.lancer_conv(a))
 
-
-            action_lancer_conv = QAction("Lancer une conversation")
-            action_lancer_conv.triggered.connect(lambda : self.lancer_conv)
-            action_retirer = QAction("Retirer l'ami")
-            action_retirer.triggered.connect(lambda : self.retirer_ami)
-            action_bloquer = QAction("Bloquer l'ami")
-            action_bloquer.triggered.connect(lambda : self.bloquer_ami)
-            self.menu = MenuDeroulable(actions=[action_lancer_conv, action_retirer, action_bloquer], pos_separateurs=[1])
-
-            self.bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
+            self.action_retirer = QAction("Retirer l'ami")
+            self.action_retirer.triggered.connect(lambda checked, a=self.ami: self.retirer_ami(a))
+            self.action_bloquer = QAction("Bloquer l'ami")
+            self.action_bloquer.triggered.connect(lambda checked, a=self.ami : self.bloquer_ami(a))
+            self.menu = QMenu()
+            self.menu.addAction(self.action_retirer)
+            self.menu.addAction(self.action_bloquer)
+            self.menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2b2b2b;
+                    border: 1px solid #3a3a3a;
+                    border-radius: 8px;
+                    padding: 6px 0px;
+                    min-width: 100px;
+                }
+                QMenu::item {
+                    color: #ffffff;
+                    font-size: 14px;
+                    padding: 10px 20px;
+                    background-color: transparent;
+                }
+                QMenu::item:selected {
+                    background-color: #3a3a3a;
+                    border-radius: 4px;
+                }
+                QMenu::separator {
+                    height: 1px;
+                    background-color: #3a3a3a;
+                    margin: 4px 10px;
+                }
+            """)
+            self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
             self.bouton_menu.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            '''self.bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"), custom_command=self.afficher_menu)'''
+
+
+
             self.layout.addWidget(self.bouton_message)
             self.layout.addWidget(self.bouton_menu)
 
 
 
+    def afficher_menu(self):
+        print('dfghjklm')
+        bouton_pos = self.bouton_menu.mapToGlobal(QPoint(0, self.bouton_menu.height() + 5))
+        print(f"bouton_pos : {bouton_pos}")
+        self.menu.popup(bouton_pos)
     
     def lancer_conv(self, ami):
         print(f'bonjour amongus : {ami}')
 
-
-    def afficher_menu(self):
-        bouton_pos = self.bouton_menu.mapToGlobal(QPoint(0, self.bouton_menu.height() + 5))
-        self.menu.exec(bouton_pos)
-
     def retirer_ami(self, ami):
         print(f'retirer amongus : {ami}')
-        pass
+        self.ami_remove.emit(ami)
 
     def bloquer_ami(self, ami):
         print(f'bloquer amongus : {ami}')
-        pass
+        self.ami_block.emit(ami)

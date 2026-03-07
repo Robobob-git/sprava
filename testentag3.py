@@ -1,33 +1,62 @@
 import sys
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QToolButton, QVBoxLayout, QMenu
-)
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QMenu
 from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt
 
-class Window(QWidget):
-    def __init__(self):
+class WidgetAmi(QWidget):
+    def __init__(self, nom):
         super().__init__()
-        self.setWindowTitle("Menu propre")
-        self.resize(300, 200)
+        layout = QHBoxLayout(self)
 
-        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(nom))
+        layout.addStretch()
 
-        self.button = QToolButton()
-        self.button.setText("⋯")
+        menu = QMenu()
+        menu.addAction(QAction("Retirer l'ami", menu))
+        menu.addAction(QAction("Bloquer", menu))
 
-        menu = QMenu(self)
-
-        menu.addAction("Démarrer un appel vidéo")
-        menu.addAction("Démarrer un appel vocal")
-        menu.addSeparator()
-        menu.addAction("Retirer l'ami")
-
-        self.button.setMenu(menu)
-        self.button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-
-        layout.addWidget(self.button)
+        bouton = QToolButton()
+        bouton.setText("⋮")
+        bouton.setFixedSize(30, 30)
+        bouton.setMenu(menu)
+        bouton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        bouton.setStyleSheet("""
+            QToolButton {
+                background-color: #3a3c43;
+                color: white;
+                border-radius: 15px;
+                border: none;
+                font-size: 16px;
+            }
+            QToolButton::menu-indicator { image: none; }
+        """)
+        layout.addWidget(bouton)
 
 app = QApplication(sys.argv)
-window = Window()
-window.show()
+
+fenetre = QWidget()
+fenetre.setStyleSheet("background-color: #2b2d31;")
+fenetre.resize(400, 300)
+
+# ScrollArea qui contient un widget avec un VBoxLayout
+scroll = QScrollArea()
+scroll.setWidgetResizable(True)
+scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
+contenu = QWidget()
+liste_layout = QVBoxLayout(contenu)
+liste_layout.setSpacing(2)
+liste_layout.addStretch()  # pousse les items vers le haut
+
+# Ajout des items
+for nom in ["Alice", "Bob", "Charlie"]:
+    w = WidgetAmi(nom)
+    liste_layout.insertWidget(liste_layout.count() - 1, w)  # insère avant le stretch
+
+scroll.setWidget(contenu)
+
+layout_principal = QVBoxLayout(fenetre)
+layout_principal.addWidget(scroll)
+
+fenetre.show()
 sys.exit(app.exec())
