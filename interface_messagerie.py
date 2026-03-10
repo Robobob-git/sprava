@@ -103,6 +103,8 @@ class InterfaceMessagerie(QWidget):
         self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
 
         self.interface.addWidget(self.interface_amis)
+        self.interface_amis.ami_remove.connect(self.remove_friend)
+        self.interface_amis.ami_remove.connect(self.block_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
 
         self.interface.addWidget(self.interface_demandes_recues)
@@ -110,12 +112,6 @@ class InterfaceMessagerie(QWidget):
         self.interface_demandes_recues.ami_accept.connect(self.new_friend)
 
         self.interface.setCurrentWidget(self.interface_amis)
-
-    def new_friend(self, friend:Ami):
-        self.liste_amis.append(friend)
-        self.interface_amis.ajouter_ami(friend)
-        self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend))
-
 
     def changer_interface(self, interface):
         if interface == self.interface:
@@ -193,7 +189,27 @@ class InterfaceMessagerie(QWidget):
         elif data == "bouton_demandes":
             self.ligne_categorie.setCurrentWidget(self.categorie_demandes)
             self.changer_interface(self.interface_demandes_recues)
-
+    
     def contact_clique(self, item):
         ami = item.data(Qt.ItemDataRole.UserRole)
         print(f"Ami cliqué : {ami.username}")
+
+    def new_friend(self, friend:Ami):
+        self.liste_amis.append(friend)
+        self.interface_amis.ajouter_ami(friend)
+        self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend))
+
+    def remove_friend(self, friend:Ami):
+        print(f'self.liste_amis : {self.liste_amis}')
+        if friend not in self.liste_amis:
+            print(f"Impossible de retirer l'ami {friend} : introuvable dans self.liste_amis")
+        else:
+            self.interface_amis.retirer_ami(friend)
+            self.liste_amis.remove(friend)
+            self.widget_colonne_contacts.retirer_item(data=friend)
+    
+    def block_friend(self, friend:Ami):
+        pass
+
+
+

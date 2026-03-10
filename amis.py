@@ -16,13 +16,18 @@ class Ami:
 
         '''self.status = "online"'''
 
+    def __eq__(self, autre):    # Permet de comparer deux instances Ami correctement
+        if isinstance(autre, Ami):
+            return self.id == autre.id
+        return False
+
 class WidgetAmi(QWidget):
     ami_remove = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
     ami_block = pyqtSignal(Ami)
 
-    def __init__(self, ami:Ami, detaillee:bool=False):
+    def __init__(self, id_ami:int, detaillee:bool=False):
         super().__init__()
-        self.ami = ami
+        self.ami = id_ami
         self.detaillee = detaillee
 
         self.layout = QHBoxLayout()
@@ -52,9 +57,9 @@ class WidgetAmi(QWidget):
             self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami: self.lancer_conv(a))
 
             self.action_retirer = QAction("Retirer l'ami")
-            self.action_retirer.triggered.connect(lambda checked, a=self.ami: self.retirer_ami(a))
+            self.action_retirer.triggered.connect(lambda checked, ami=self.ami: self.ami_remove.emit(ami))
             self.action_bloquer = QAction("Bloquer l'ami")
-            self.action_bloquer.triggered.connect(lambda checked, a=self.ami : self.bloquer_ami(a))
+            self.action_bloquer.triggered.connect(lambda checked, ami=self.ami : self.ami_block.emit(ami))
             self.menu = QMenu()
             self.menu.addAction(self.action_retirer)
             self.menu.addAction(self.action_bloquer)
@@ -101,11 +106,3 @@ class WidgetAmi(QWidget):
     
     def lancer_conv(self, ami):
         print(f'bonjour amongus : {ami}')
-
-    def retirer_ami(self, ami):
-        print(f'retirer amongus : {ami}')
-        self.ami_remove.emit(ami)
-
-    def bloquer_ami(self, ami):
-        print(f'bloquer amongus : {ami}')
-        self.ami_block.emit(ami)

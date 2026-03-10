@@ -203,6 +203,8 @@ class ListeElements(QListWidget):
     def __init__(self, parent=None, horizontal:bool=False, custom_command=None):
         super().__init__(parent)
 
+        self._items = {}  # {data: QListWidgetItem}
+
         self.setSpacing(2)
         self.setFrameShape(QListWidget.Shape.NoFrame)
 
@@ -236,6 +238,21 @@ class ListeElements(QListWidget):
         item.setData(Qt.ItemDataRole.UserRole, data)
         self.addItem(item)
         self.setItemWidget(item, widget)
+
+        if hasattr(data, "id"):
+            self._items[data.id] = item
+        else:
+            self._items[data] = item
+    
+    def retirer_item(self, data):
+        print(self._items, ' ', data)
+        if hasattr(data, "id"):
+            item = self._items.pop(data.id, None)
+        else:
+            item = self._items.pop(data, None)
+
+        if item:
+            self.takeItem(self.row(item))   # On supprime l'item visuellement (takeItem a besoin d'un indice, c'est pour ça qu'on cherche l'indice de la ligne avec row())
 
 
 class GroupeBoutons(QWidget):
