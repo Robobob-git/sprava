@@ -2,10 +2,11 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
+from cache import Cache
 from interface_graphique import BoutonCustom, BoutonMenu
 from autre_fonctions import obtenir_vrai_chemin
 
-class Ami:
+"""class Ami:
     def __init__(self, ami_infos:dict):
         self.username = ami_infos.get("username")
         self.id = ami_infos.get("user_id")
@@ -19,16 +20,19 @@ class Ami:
     def __eq__(self, autre):    # Permet de comparer deux instances Ami correctement
         if isinstance(autre, Ami):
             return self.id == autre.id
-        return False
+        return False"""
 
 class WidgetAmi(QWidget):
-    ami_remove = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
-    ami_block = pyqtSignal(Ami)
+    ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
+    ami_block = pyqtSignal(int)
 
-    def __init__(self, id_ami:int, detaillee:bool=False):
+    def __init__(self, ami_id:int, cache:Cache, detaillee:bool=False):
         super().__init__()
-        self.ami = id_ami
+        self.ami_id = ami_id
+        self.cache = cache
         self.detaillee = detaillee
+
+        self.ami = cache.ami
 
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(10, 5, 10, 5)

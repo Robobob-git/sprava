@@ -2,19 +2,21 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
-from amis import Ami, WidgetAmi
+from amis import WidgetAmi
+from cache import Cache
 from autre_fonctions import obtenir_vrai_chemin
 from interface_graphique import GroupeBoutons, BoutonCustom, ListeElements, TexteEtImage
 
 
 class InterfaceAmis(QWidget):
-    ami_remove = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
-    ami_block = pyqtSignal(Ami)
+    ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
+    ami_block = pyqtSignal(int)
 
-    def __init__(self, amis:list[Ami]):
+    def __init__(self, amis:list[int], cache:Cache):
         super().__init__()
 
         self.amis = amis
+        self.cache = cache
 
         self.layout = QVBoxLayout()
 
@@ -39,11 +41,11 @@ class InterfaceAmis(QWidget):
         self.layout.addWidget(self.liste_amis)'''
 
         self.liste_amis = ListeElements()
-        for ami in self.amis:
-            widget_ami = WidgetAmi(ami, True)
-            widget_ami.ami_remove.connect(lambda ami : self.ami_remove.emit(ami))    # On renvoie un signal plus haut vers interface_messagerie
-            widget_ami.ami_block.connect(lambda ami : self.ami_block.emit(ami))      # la même
-            self.liste_amis.ajouter_item(data=ami, widget=widget_ami)
+        for ami_id in self.cache.amis_ids():
+            widget_ami = WidgetAmi(ami_id, self.cache, True)
+            widget_ami.ami_remove.connect(lambda ami_id : self.ami_remove.emit(ami_id))    # On renvoie un signal plus haut vers interface_messagerie
+            widget_ami.ami_block.connect(lambda ami_id : self.ami_block.emit(ami_id))      # la même
+            self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
         self.liste_amis.itemClicked.connect(self.ami_clique)
         self.layout.addWidget(self.liste_amis)
         
@@ -52,13 +54,11 @@ class InterfaceAmis(QWidget):
         print(f"ami cliqué : {data}")
 
     def ajouter_ami(self, id_ami:int):
-        self.amis.append(ami)
-        self.liste_amis.ajouter_item(data=ami, widget=WidgetAmi(ami, True))
+        self.liste_amis.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, cache, True))
 
     def retirer_ami(self, id_ami:int):
-        print(f"truc à retirer : {ami}\nself.liste_amis : {self.amis}")
-        self.amis.remove(ami)
-        self.liste_amis.retirer_item(data=ami)
+        print(f"truc à retirer : {ami_id}")
+        self.liste_amis.retirer_item(data=ami_id)
 
 
 

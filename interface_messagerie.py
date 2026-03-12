@@ -10,7 +10,8 @@ from interface_ajouter_ami import InterfaceAjouterAmi
 from interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
 
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
-from amis import Ami, WidgetAmi
+from cache import Cache
+from amis import WidgetAmi
 
 class WidgetExtraBouton(QWidget):
     def __init__(self, texte: str, icone: str | None=None):
@@ -44,10 +45,7 @@ class InterfaceMessagerie(QWidget):
 
         self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)
-        amis_infos = self.gestionnaire_amis.obtenir_amis(toutes_infos=True)
-        self.liste_amis = []
-        if amis_infos:
-            self.liste_amis = [Ami(a) for a in amis_infos]
+        self.liste_amis = self.session.cache.amis_ids()
 
         self._faire_ui()
         
