@@ -3,8 +3,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from dataclasses import dataclass
 
-from amis import Ami
-
 from gestionnaires_requetes import GestionAmis
 from interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
@@ -15,14 +13,12 @@ class Demande:
     identifiant: int
 
 class InterfaceDemandesRecues(QWidget):
-    ami_accept = pyqtSignal(Ami)    # On le crée ici parce que les pyqtSignal sont bizzares
+    ami_accept = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
 
-    def __init__(self, gestionnaire_utilisateurs, gestionnaire_amis):
+    def __init__(self, session):
         super().__init__()
 
-        self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
-        self.gestionnaire_amis = gestionnaire_amis
-
+        self.session = session
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -41,7 +37,7 @@ class InterfaceDemandesRecues(QWidget):
             if rep.get('friend_requests_ids') == []:
                 return []
             liste_ids = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
-            liste_noms = self.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
+            liste_noms = self.session.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
 
             return [Demande(nom, iden) for nom, iden in zip(liste_noms, liste_ids)]
 

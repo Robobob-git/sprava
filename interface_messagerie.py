@@ -34,21 +34,20 @@ class WidgetExtraBouton(QWidget):
         layout.addStretch()
 
 class InterfaceMessagerie(QWidget):
-    def __init__(self, fenetre_principale:QMainWindow, user_info:dict, token:str):
+    def __init__(self, fenetre_principale:QMainWindow, session):
         super().__init__()
         self.fenetre_principale = fenetre_principale
-        self.user_info = user_info
-        self.token = token
+        self.session = session
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
-        self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
-        self.gestionnaire_amis = GestionAmis(token=self.token)
-        self.liste_amis = self.session.cache.amis_ids()
+        '''self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
+        self.gestionnaire_amis = GestionAmis(token=self.token)'''
 
-        self._faire_ui()
+        self.liste_amis = self.session.cache.amis_ids()
         
+        self._faire_ui()
 
     def _faire_ui(self):
         self._faire_barre_laterale()
@@ -70,8 +69,8 @@ class InterfaceMessagerie(QWidget):
         layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
 
         self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
-        for ami in self.liste_amis:
-            self.widget_colonne_contacts.ajouter_item(data=ami, widget=WidgetAmi(ami))
+        for ami_id in self.liste_amis:
+            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id))
 
 
         widget_logo = QLabel()
@@ -96,9 +95,9 @@ class InterfaceMessagerie(QWidget):
         self.layout.addWidget(self.interface, 1, 1)
 
         self.interface_amis = InterfaceAmis(amis=self.liste_amis)
-        self.interface_ajouter_amis = InterfaceAjouterAmi(gestionnaire_amis=self.gestionnaire_amis)
-        self.interface_demandes_recues = InterfaceDemandesRecues(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
-        self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(gestionnaire_utilisateurs=self.gestionnaire_utilisateurs, gestionnaire_amis=self.gestionnaire_amis)
+        self.interface_ajouter_amis = InterfaceAjouterAmi(session=self.session)
+        self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session)
+        self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session)
 
         self.interface.addWidget(self.interface_amis)
         self.interface_amis.ami_remove.connect(self.remove_friend)
@@ -192,12 +191,12 @@ class InterfaceMessagerie(QWidget):
         ami = item.data(Qt.ItemDataRole.UserRole)
         print(f"Ami cliqué : {ami.username}")
 
-    def new_friend(self, friend:Ami):
+    def new_friend(self, friend:int):
         self.liste_amis.append(friend)
         self.interface_amis.ajouter_ami(friend)
         self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend))
 
-    def remove_friend(self, friend:Ami):
+    def remove_friend(self, friend:int):
         print(f'self.liste_amis : {self.liste_amis}')
         if friend not in self.liste_amis:
             print(f"Impossible de retirer l'ami {friend} : introuvable dans self.liste_amis")
@@ -206,7 +205,7 @@ class InterfaceMessagerie(QWidget):
             self.liste_amis.remove(friend)
             self.widget_colonne_contacts.retirer_item(data=friend)
     
-    def block_friend(self, friend:Ami):
+    def block_friend(self, friend:int):
         pass
 
 

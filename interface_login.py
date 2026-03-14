@@ -5,6 +5,7 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from interface_graphique import BoutonCustom
 from gestionnaires_requetes import GestionConnexions
 from interface_messagerie import InterfaceMessagerie
+from session import Session
 
 class InterfaceLogin(QWidget):
     def __init__(self, fenetre_principale:QMainWindow):
@@ -144,7 +145,8 @@ class InterfaceLogin(QWidget):
     def connexion_confirmee(self):
         print(f"token : {self.token}")
         print("Connecté avec succès")
-        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, user_info=self.user_info, token=self.token)
+        self.session = Session(user_info=self.user_info, token=self.token)
+        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
         self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
         self.fenetre_principale.changer_interface(interface_messagerie)
 

@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from amis import WidgetAmi
-from cache import Cache
 from autre_fonctions import obtenir_vrai_chemin
 from interface_graphique import GroupeBoutons, BoutonCustom, ListeElements, TexteEtImage
 
@@ -12,11 +11,13 @@ class InterfaceAmis(QWidget):
     ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
     ami_block = pyqtSignal(int)
 
-    def __init__(self, amis:list[int], cache:Cache):
+    def __init__(self, amis:list[int], session):
         super().__init__()
 
         self.amis = amis
-        self.cache = cache
+
+        self.session = session
+        self.cache = session.cache
 
         self.layout = QVBoxLayout()
 
@@ -53,10 +54,10 @@ class InterfaceAmis(QWidget):
         data = item.data(Qt.ItemDataRole.UserRole)
         print(f"ami cliqué : {data}")
 
-    def ajouter_ami(self, id_ami:int):
+    def ajouter_ami(self, ami_id:int):
         self.liste_amis.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, cache, True))
 
-    def retirer_ami(self, id_ami:int):
+    def retirer_ami(self, ami_id:int):
         print(f"truc à retirer : {ami_id}")
         self.liste_amis.retirer_item(data=ami_id)
 
