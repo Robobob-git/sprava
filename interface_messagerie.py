@@ -94,7 +94,7 @@ class InterfaceMessagerie(QWidget):
         self.interface = QStackedWidget()
         self.layout.addWidget(self.interface, 1, 1)
 
-        self.interface_amis = InterfaceAmis(amis=self.liste_amis)
+        self.interface_amis = InterfaceAmis(amis=self.liste_amis, session=self.session)
         self.interface_ajouter_amis = InterfaceAjouterAmi(session=self.session)
         self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session)
         self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session)
