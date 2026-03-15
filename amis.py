@@ -28,18 +28,19 @@ class WidgetAmi(QWidget):
 
     def __init__(self, ami_id:int, cache:Cache, detaillee:bool=False):
         super().__init__()
-        self.ami_id = ami_id
         self.cache = cache
         self.detaillee = detaillee
 
-        self.ami = cache.ami
+        self.ami = cache.ami_par_id(ami_id)
+        if self.ami:
+            self.layout = QHBoxLayout()
+            self.layout.setContentsMargins(10, 5, 10, 5)
+            
+            self._construire_widget()
 
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(10, 5, 10, 5)
-        
-        self._construire_widget()
-
-        self.setLayout(self.layout)
+            self.setLayout(self.layout)
+        else:
+            print(f'{ami_id} introuvable dans {cache.amis_ids()}')
     
     def _construire_widget(self):
         pp = QLabel()

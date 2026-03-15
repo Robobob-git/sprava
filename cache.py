@@ -1,26 +1,21 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timedelta
-from dataclasses import dataclass
 
 TTL_AMIS = timedelta(minutes=5)
 
-# ─────────────────────────────────────────
-#  Modèle
-# ─────────────────────────────────────────
-
-@dataclass
 class Ami:
-    id: int
-    username: str
-    avatar_id: str | None = None
-    mail: str | None = None
-    phone: str | None = None
-    date_of_birth: str | None = None
-    en_ligne: bool = False          # volatile : jamais persisté en SQLite
+    def __init__(self, id:int, username:str, avatar_id:str = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False):
+        self.id = id
+        self.username = username
+        self.avatar_id = avatar_id
+        self.mail = mail
+        self.phone = phone
+        self.date_of_birth = date_of_birth
+        self.online = online
 
     @staticmethod
-    def depuis_dict(d: dict) -> "Ami":
+    def depuis_dict(d: dict):
         """Construit un Ami depuis la réponse brute de l'API."""
         return Ami(
             id=d.get("user_id"),
@@ -39,9 +34,9 @@ class Ami:
     def __hash__(self):
         return hash(self.id)
 
-# ─────────────────────────────────────────
+
+
 #  Cache SQLite + dict mémoire
-# ─────────────────────────────────────────
 
 class Cache:
     def __init__(self, user_id: int):
@@ -59,7 +54,7 @@ class Cache:
             a.id: a for a in self._lire_amis_sqlite()
         }
 
-    # ── Tables ───────────────────────────────────────────────
+    # Tables
 
     def _init_tables(self):
         self._conn.executescript("""
@@ -90,7 +85,7 @@ class Cache:
         """)
         self._conn.commit()
 
-    # ── TTL ──────────────────────────────────────────────────
+    # TTL
 
     def _get_meta(self, cle: str) -> str | None:
         row = self._conn.execute(
@@ -113,7 +108,7 @@ class Cache:
         age = datetime.now() - datetime.fromisoformat(derniere_sync)
         return age > TTL_AMIS
 
-    # ── Lecture (depuis dict mémoire uniquement) ─────────────
+    # Lecture (depuis dict mémoire uniquement)
 
     def amis(self) -> list[Ami]:
         return list(self._amis.values())
@@ -124,7 +119,7 @@ class Cache:
     def ami_par_id(self, id_: int) -> Ami | None:
         return self._amis.get(id_)
 
-    # ── Écriture (SQLite + dict) ──────────────────────────────
+    # Écriture (SQLite + dict)
 
     def ecrire_amis(self, amis: list[Ami]):
         """Sync complète : remplace tout le cache. Met à jour TTL."""
@@ -136,10 +131,10 @@ class Cache:
                 [(a.id, a.username, a.avatar_id, a.mail, a.phone, a.date_of_birth) for a in amis]
             )
         self._set_meta("amis_sync_at", datetime.now().isoformat())
-        # Mise à jour du dict (on préserve les statuts en_ligne déjà en mémoire)
+        # Mise à jour du dict (on préserve les statuts online déjà en mémoire)
         for a in amis:
             if a.id in self._amis:
-                a.en_ligne = self._amis[a.id].en_ligne
+                a.online = self._amis[a.id].online
         self._amis = {a.id: a for a in amis}
 
     def upsert_ami(self, ami: Ami):
@@ -159,12 +154,12 @@ class Cache:
             self._conn.execute("DELETE FROM amis WHERE id = ?", (id_,))
         self._amis.pop(id_, None)
 
-    def set_statut_ami(self, id_: int, en_ligne: bool):
+    def set_statut_ami(self, id_: int, online: bool):
         """Met à jour le statut online/offline — dict uniquement, pas SQLite."""
         if id_ in self._amis:
-            self._amis[id_].en_ligne = en_ligne
+            self._amis[id_].online = online
 
-    # ── Invalidation totale (déconnexion) ────────────────────
+    # Invalidation totale (déconnexion)
 
     def invalider_tout(self):
         """Vide tout le cache. Appelé à la déconnexion."""
@@ -173,7 +168,7 @@ class Cache:
             self._conn.execute("DELETE FROM cache_meta")
         self._amis = {}
 
-    # ── Lecture SQLite brute (usage interne uniquement) ───────
+    # Lecture SQLite brute (usage interne uniquement)
 
     def _lire_amis_sqlite(self) -> list[Ami]:
         rows = self._conn.execute(
@@ -181,7 +176,7 @@ class Cache:
         ).fetchall()
         return [Ami(**dict(r)) for r in rows]
 
-    # ── Cycle de vie ─────────────────────────────────────────
+    # Cycle de vie
 
     def fermer(self):
         self._conn.close()

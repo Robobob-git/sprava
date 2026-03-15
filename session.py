@@ -12,8 +12,8 @@ class Session:
         self.gestionnaire_amis = GestionAmis(token=token)
         self.gestionnaire_utilisateurs = GestionUtilisateurs(token=token)
 
-        self.ws = WebSocketClient(token)
-        self.ws.start()
+        '''self.ws = WebSocketClient(token)
+        self.ws.start()'''
 
     def fermer(self):
         self.cache.invalider_tout()

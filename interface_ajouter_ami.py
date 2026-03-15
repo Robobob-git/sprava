@@ -5,10 +5,10 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
-    def __init__(self, gestionnaire_amis):
+    def __init__(self, session):
         super().__init__()
 
-        self.gestionnaire_amis = gestionnaire_amis
+        self.session = session
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -51,7 +51,7 @@ class InterfaceAjouterAmi(QWidget):
 
     def envoyer_demande(self):
         nom = self.recherche_qqn.text()
-        rep = self.gestionnaire_amis.demander_en_ami(nom_ami=nom)
+        rep = self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom)
 
         if rep.get('status_code') == 404:
             print("utilisateur introuvable")

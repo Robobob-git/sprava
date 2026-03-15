@@ -14,7 +14,7 @@ from cache import Cache
 from amis import WidgetAmi
 
 class WidgetExtraBouton(QWidget):
-    def __init__(self, texte: str, icone: str | None=None):
+    def __init__(self, texte:str, icone:str = None):
         super().__init__()
 
         layout = QHBoxLayout(self)
@@ -70,7 +70,7 @@ class InterfaceMessagerie(QWidget):
 
         self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
         for ami_id in self.liste_amis:
-            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id))
+            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.session.cache))
 
 
         widget_logo = QLabel()
@@ -194,7 +194,7 @@ class InterfaceMessagerie(QWidget):
     def new_friend(self, friend:int):
         self.liste_amis.append(friend)
         self.interface_amis.ajouter_ami(friend)
-        self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend))
+        self.widget_colonne_contacts.ajouter_item(data=friend, widget=WidgetAmi(friend, self.session.cache))
 
     def remove_friend(self, friend:int):
         print(f'self.liste_amis : {self.liste_amis}')

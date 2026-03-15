@@ -55,7 +55,7 @@ class InterfaceAmis(QWidget):
         print(f"ami cliqué : {data}")
 
     def ajouter_ami(self, ami_id:int):
-        self.liste_amis.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, cache, True))
+        self.liste_amis.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache, True))
 
     def retirer_ami(self, ami_id:int):
         print(f"truc à retirer : {ami_id}")

@@ -30,7 +30,7 @@ class InterfaceDemandesRecues(QWidget):
         self.ui = self._faire_ui()
 
     def _trouver_demandes_recues(self):
-        rep = self.gestionnaire_amis.obtenir_demandes_amis_recues() # La réponse est de la forme : {'status_code': 200, 'friend_requests_ids': [{'sender_id': 17, 'created_at': '2026-02-11T09:58:13'}]}
+        rep = self.session.gestionnaire_amis.obtenir_demandes_amis_recues() # La réponse est de la forme : {'status_code': 200, 'friend_requests_ids': [{'sender_id': 17, 'created_at': '2026-02-11T09:58:13'}]}
         print(rep)
 
         if rep.get('status_code') == 200:
@@ -39,7 +39,7 @@ class InterfaceDemandesRecues(QWidget):
             liste_ids = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
             liste_noms = self.session.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
 
-            return [Demande(nom, iden) for nom, iden in zip(liste_noms, liste_ids)]
+            return [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
 
     def _faire_ui(self):
         widget_recues = ListeElements()
@@ -59,15 +59,10 @@ class InterfaceDemandesRecues(QWidget):
         return widget_recues
 
     def accepter_demande(self, demande):
-        rep = self.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.identifiant)
+        rep = self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.identifiant)
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
-
-            infos = self.gestionnaire_utilisateurs.obtenir_infos(son_id=rep.get('new_friend_id'))
-            print(f'infos ami : {infos}')
-            ami = Ami(ami_infos=infos)
-
-            self.ami_accept.emit(ami)
+            self.ami_accept.emit(rep.get('new_friend_id'))
 
 
             self.update_ui()
@@ -75,7 +70,7 @@ class InterfaceDemandesRecues(QWidget):
             print(f"erreur lors de l'accpetation de {demande.nom}")
 
     def refuser_demande(self, demande):
-        rep = self.gestionnaire_amis.refuser_demande_ami(id_ami=demande.identifiant)
+        rep = self.session.gestionnaire_amis.refuser_demande_ami(id_ami=demande.identifiant)
         print(f'la rep : {rep}')
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
@@ -92,11 +87,10 @@ class InterfaceDemandesRecues(QWidget):
         self.ui = self._faire_ui
 
 class InterfaceDemandesEnvoyees(QWidget):
-    def __init__(self, gestionnaire_utilisateurs, gestionnaire_amis):
+    def __init__(self, session):
         super().__init__()
 
-        self.gestionnaire_utilisateurs = gestionnaire_utilisateurs
-        self.gestionnaire_amis = gestionnaire_amis
+        self.session = session
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -105,14 +99,14 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.ui = self._faire_ui()
     
     def _trouver_demandes_envoyees(self):
-        rep = self.gestionnaire_amis.obtenir_demandes_amis_envoyees()
+        rep = self.session.gestionnaire_amis.obtenir_demandes_amis_envoyees()
         if rep.get('status_code') == 200:
             if rep.get('sent_friend_requests_ids') == []:
                 return []
             liste_ids = [fr.get('receiver_id') for fr in rep.get('sent_friend_requests_ids')]
-            liste_noms = self.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
+            liste_noms = self.session.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
             
-            return [Demande(nom, iden) for nom, iden in zip(liste_noms, liste_ids)]
+            return [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
 
     def _faire_ui(self):
         widget_envoyees = ListeElements()
@@ -130,7 +124,7 @@ class InterfaceDemandesEnvoyees(QWidget):
         return widget_envoyees
     
     def annuler_demande(self, demande):
-        rep = self.gestionnaire_amis.annuler_demande_ami(nom_ami=demande.nom)
+        rep = self.session.gestionnaire_amis.annuler_demande_ami(nom_ami=demande.nom)
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
             self.update_ui()
