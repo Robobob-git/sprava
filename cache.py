@@ -23,10 +23,11 @@ class Ami:
             avatar_id=d.get("avatar_id"),
             mail=d.get("mail"),
             phone=d.get("phone"),
-            date_of_birth=d.get("date_of_birth"),
+            date_of_birth=d.get("date_of_birth")
         )
 
     def __eq__(self, autre):
+        """Permet de comparer 2 instances Ami"""
         if isinstance(autre, Ami):
             return self.id == autre.id
         return False
@@ -49,10 +50,9 @@ class Cache:
         self._init_tables()
 
         # Chargement initial du dict depuis SQLite
-        # Toutes les lectures passeront par ce dict → jamais d'I/O disque pendant la session
-        self._amis: dict[int, Ami] = {
-            a.id: a for a in self._lire_amis_sqlite()
-        }
+        # Toutes les lectures passeront par ce dict
+        self._amis: dict[int, Ami] = {a.id: a for a in self._lire_amis_sqlite()}
+        self._blocked: set[int] = self._lire_blocked_sqlite()
 
     # Tables
 
@@ -65,6 +65,10 @@ class Cache:
                 mail          TEXT,
                 phone         TEXT,
                 date_of_birth TEXT
+            );
+                                 
+            CREATE TABLE IF NOT EXISTS blocked (
+                id INTEGER PRIMARY KEY
             );
 
             CREATE TABLE IF NOT EXISTS cache_meta (
@@ -88,9 +92,7 @@ class Cache:
     # TTL
 
     def _get_meta(self, cle: str) -> str | None:
-        row = self._conn.execute(
-            "SELECT valeur FROM cache_meta WHERE cle = ?", (cle,)
-        ).fetchone()
+        row = self._conn.execute("SELECT valeur FROM cache_meta WHERE cle = ?", (cle,)).fetchone()
         return row["valeur"] if row else None
 
     def _set_meta(self, cle: str, valeur: str):
@@ -116,8 +118,14 @@ class Cache:
     def amis_ids(self) -> list[int]:
         return list(self._amis.keys())    
 
-    def ami_par_id(self, id_: int) -> Ami | None:
+    def ami_par_id(self, id_: int) -> Ami:
         return self._amis.get(id_)
+    
+    def blocked_ids(self) -> set[int]:
+        return set(self._blocked)
+    
+    def is_blocked(self, id_: int) -> bool:
+        return id_ in self._blocked
 
     # Écriture (SQLite + dict)
 
@@ -135,7 +143,7 @@ class Cache:
         for a in amis:
             if a.id in self._amis:
                 a.online = self._amis[a.id].online
-        self._amis = {a.id: a for a in amis}
+        self._amis = {a.id:a for a in amis}
 
     def upsert_ami(self, ami: Ami):
         """Ajoute ou met à jour un ami (ex: friend_request_accepted)."""
@@ -154,8 +162,18 @@ class Cache:
             self._conn.execute("DELETE FROM amis WHERE id = ?", (id_,))
         self._amis.pop(id_, None)
 
+    def block(self, id_: int):
+        with self._conn:
+            self._conn.execute("INSERT OR IGNORE INTO blocked (id) VALUES (?)", (id_,))
+        self._blocked.add(id_)
+
+    def unblock(self, id_: int):
+        with self._conn:
+            self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
+        self._blocked.discard(id_)  
+
     def set_statut_ami(self, id_: int, online: bool):
-        """Met à jour le statut online/offline — dict uniquement, pas SQLite."""
+        """Met à jour le statut online/offline"""
         if id_ in self._amis:
             self._amis[id_].online = online
 
@@ -166,15 +184,19 @@ class Cache:
         with self._conn:
             self._conn.execute("DELETE FROM amis")
             self._conn.execute("DELETE FROM cache_meta")
+            self._conn.execute("DELETE FROM blocked")
         self._amis = {}
+        self._blocked = set()
 
     # Lecture SQLite brute (usage interne uniquement)
 
     def _lire_amis_sqlite(self) -> list[Ami]:
-        rows = self._conn.execute(
-            "SELECT id, username, avatar_id, mail, phone, date_of_birth FROM amis"
-        ).fetchall()
+        rows = self._conn.execute("SELECT id, username, avatar_id, mail, phone, date_of_birth FROM amis").fetchall()
         return [Ami(**dict(r)) for r in rows]
+    
+    def _lire_blocked_sqlite(self) -> set[int]:
+        rows = self._conn.execute("SELECT id FROM blocked").fetchall()
+        return {r["id"] for r in rows}
 
     # Cycle de vie
 

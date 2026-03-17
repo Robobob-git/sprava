@@ -46,8 +46,8 @@ class GestionUtilisateurs:
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user/username?username={nom}", type_de_r='get')
         return rep.get("user_id")
 
-    def obtenir_nom(self, son_id:int):
-        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user/username?user_id={son_id}", type_de_r='get')
+    def obtenir_nom(self, id_:int):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user/username?user_id={id_}", type_de_r='get')
         return rep.get("username")
     
     def obtenir_noms(self, ids:list[int]) -> list[str]:
@@ -57,8 +57,8 @@ class GestionUtilisateurs:
         ids_amis = self.obtenir_infos_multiples(ids=ids)
         return [user.get('username') for user in ids_amis]
 
-    def obtenir_infos(self, son_id:int):
-        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user?user_id={son_id}", type_de_r="get")
+    def obtenir_infos(self, id_:int):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user?user_id={id_}", type_de_r="get")
         return rep
 
     def obtenir_infos_multiples(self, ids:list[int]) -> list:
@@ -105,14 +105,14 @@ class GestionAmis:
             print("Informations en confliction sur l'appel obtenir_amis")
             return
 
-    def demander_en_ami(self, nom_ami:str=None, id_ami:int=None):
-        if not nom_ami and not id_ami:
+    def demander_en_ami(self, nom_ami:str=None, ami_id:int=None):
+        if not nom_ami and not ami_id:
             print("Veuillez renseigner le nom ou l'id le l'ami à ajouter")
             return
         if nom_ami:
-            id_ami = self.gestion_utilisateurs.obtenir_id(nom_ami)
+            ami_id = self.gestion_utilisateurs.obtenir_id(nom_ami)
 
-        body = {"receiver_id" : id_ami}
+        body = {"receiver_id" : ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/send_friend_request", type_de_r='post', body=body)
         print(rep)
         return rep
@@ -127,13 +127,13 @@ class GestionAmis:
         print(rep)
         return rep
 
-    def accepter_demande_ami(self, nom_ami:str=None, id_ami:int=None):
-        if not nom_ami and id_ami:
+    def accepter_demande_ami(self, nom_ami:str=None, ami_id:int=None):
+        if not nom_ami and ami_id:
             return
         elif nom_ami:
-            id_ami = self.gestion_utilisateurs.obtenir_id(nom_ami)
+            ami_id = self.gestion_utilisateurs.obtenir_id(nom_ami)
 
-        body = {"sender_id": id_ami}
+        body = {"sender_id": ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/accept_friend_request", type_de_r='post',body=body)
         print(rep)
         return rep
@@ -142,28 +142,38 @@ class GestionAmis:
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/cancel_friend_request/{nom_ami}", type_de_r='get')
         return rep
 
-    def refuser_demande_ami(self, id_ami:int):
-        body = {"sender_id": id_ami}
+    def refuser_demande_ami(self, ami_id:int):
+        body = {"sender_id": ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/reject_friend_request", type_de_r='delete', body=body)
         return rep
 
-    def enlever_ami(self, nom_ami:str=None, id_ami:int=None):
-        if not nom_ami and not id_ami:
+    def enlever_ami(self, nom_ami:str=None, ami_id:int=None):
+        if not nom_ami and not ami_id:
             return
         elif nom_ami: 
-            id_ami = self.gestion_utilisateurs.obtenir_id(nom_ami)
+            ami_id = self.gestion_utilisateurs.obtenir_id(nom_ami)
 
-        body = {'friend_id':id_ami}
+        body = {'friend_id': ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/remove_friend", type_de_r='delete', body=body)
         print(rep)
         return rep
     
 
-    def bloquer_ami(self, nom_ami):
-        self.gestionnaire_de_requetes.faire_requete(url=f"/me/block_user/{nom_ami}", type_de_r='get')
+    def bloquer_ami(self, ami_id):
+        body = {"friend_id" : ami_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/block_user", body=body, type_de_r='post')
+        print(f'on bloque {ami_id} : {rep}')
+        return rep
     
-    def debloquer_ami(self, nom_ami):
-        self.gestionnaire_de_requetes.faire_requete(url=f"/me/unblock_user/{nom_ami}", type_de_r='get')
+    def debloquer_ami(self, ami_id):
+        body = {"friend_id" : ami_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/unblock_user", body=body, type_de_r='delete')
+        print(f'on débloque {ami_id} : {rep}')
+        return rep
+    
+    def obtenir_blocked(self):
+        rep = self.gestionnaire_de_requetes.faire_requete(url="/me/blocked_users", type_de_r='get')
+        return rep
     
 class GestionConnexions:
     def __init__(self):

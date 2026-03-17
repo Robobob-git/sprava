@@ -28,6 +28,7 @@ class WidgetAmi(QWidget):
 
     def __init__(self, ami_id:int, cache:Cache, detaillee:bool=False):
         super().__init__()
+        self.ami_id = ami_id
         self.cache = cache
         self.detaillee = detaillee
 
@@ -40,7 +41,7 @@ class WidgetAmi(QWidget):
 
             self.setLayout(self.layout)
         else:
-            print(f'{ami_id} introuvable dans {cache.amis_ids()}')
+            print(f'{self.ami_id} introuvable dans {cache.amis_ids()}')
     
     def _construire_widget(self):
         pp = QLabel()
@@ -59,12 +60,12 @@ class WidgetAmi(QWidget):
         self.layout.addStretch()
 
         if self.detaillee:
-            self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami: self.lancer_conv(a))
+            self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami_id: self.lancer_conv(a))
 
             self.action_retirer = QAction("Retirer l'ami")
-            self.action_retirer.triggered.connect(lambda checked, ami=self.ami: self.ami_remove.emit(ami))
+            self.action_retirer.triggered.connect(lambda checked, ami_id=self.ami_id: self.ami_remove.emit(ami_id))
             self.action_bloquer = QAction("Bloquer l'ami")
-            self.action_bloquer.triggered.connect(lambda checked, ami=self.ami : self.ami_block.emit(ami))
+            self.action_bloquer.triggered.connect(lambda checked, ami_id=self.ami_id : self.ami_block.emit(ami_id))
             self.menu = QMenu()
             self.menu.addAction(self.action_retirer)
             self.menu.addAction(self.action_bloquer)
@@ -109,5 +110,5 @@ class WidgetAmi(QWidget):
         print(f"bouton_pos : {bouton_pos}")
         self.menu.popup(bouton_pos)
     
-    def lancer_conv(self, ami):
-        print(f'bonjour amongus : {ami}')
+    def lancer_conv(self, ami_id):
+        print(f'bonjour amongus : {ami_id}')
