@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 TTL_AMIS = timedelta(minutes=5)
 
 class Ami:
-    def __init__(self, id:int, username:str, avatar_id:str = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False):
+    def __init__(self, id:int, username:str, avatar_id:int = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False):
         self.id = id
         self.username = username
         self.avatar_id = avatar_id
@@ -35,6 +35,11 @@ class Ami:
     def __hash__(self):
         return hash(self.id)
 
+class Blocked:
+    def __init__(self, id:int, username:str, avatar_id:int = None):
+        self.id = id
+        self.username = username
+        self.avatar_id = avatar_id
 
 
 #  Cache SQLite + dict mémoire
@@ -52,23 +57,25 @@ class Cache:
         # Chargement initial du dict depuis SQLite
         # Toutes les lectures passeront par ce dict
         self._amis: dict[int, Ami] = {a.id: a for a in self._lire_amis_sqlite()}
-        self._blocked: set[int] = self._lire_blocked_sqlite()
+        self._blocked: dict[int, Blocked] = self._lire_blocked_sqlite()
 
     # Tables
 
     def _init_tables(self):
         self._conn.executescript("""
             CREATE TABLE IF NOT EXISTS amis (
-                id            INTEGER PRIMARY KEY,
-                username      TEXT    NOT NULL,
-                avatar_id     TEXT,
-                mail          TEXT,
-                phone         TEXT,
+                id INTEGER PRIMARY KEY,
+                username TEXT NOT NULL,
+                avatar_id TEXT,
+                mail TEXT,
+                phone TEXT,
                 date_of_birth TEXT
             );
                                  
             CREATE TABLE IF NOT EXISTS blocked (
-                id INTEGER PRIMARY KEY
+                id INTEGER PRIMARY KEY,
+                username TEXT NOT NULL,
+                avatar_id TEXT
             );
 
             CREATE TABLE IF NOT EXISTS cache_meta (
@@ -118,13 +125,20 @@ class Cache:
     def amis_ids(self) -> list[int]:
         return list(self._amis.keys())    
 
-    def ami_par_id(self, id_: int) -> Ami:
+    def ami_par_id(self, id_:int) -> Ami:
         return self._amis.get(id_)
     
+
+    def blocked(self) -> list[Blocked]:
+        return list(self._blocked.values())
+
     def blocked_ids(self) -> set[int]:
         return set(self._blocked)
     
-    def is_blocked(self, id_: int) -> bool:
+    def blocked_par_id(self, id_:int) -> Blocked:
+        return self._blocked.get(id_)
+    
+    def is_blocked(self, id_:int) -> bool:
         return id_ in self._blocked
 
     # Écriture (SQLite + dict)
@@ -156,21 +170,28 @@ class Cache:
             )
         self._amis[ami.id] = ami
 
-    def invalider_ami(self, id_: int):
+    def invalider_ami(self, id_:int):
         """Retire un ami du cache (ex: remove_friend)."""
         with self._conn:
             self._conn.execute("DELETE FROM amis WHERE id = ?", (id_,))
         self._amis.pop(id_, None)
 
-    def block(self, id_: int):
-        with self._conn:
-            self._conn.execute("INSERT OR IGNORE INTO blocked (id) VALUES (?)", (id_,))
-        self._blocked.add(id_)
+    def block(self, id_:int):
+        ami = self.ami_par_id(id_)
+        if not ami:
+            print(f"Impossible de bloquer {id_} : ami introuvable dans le cache")
+            return
 
-    def unblock(self, id_: int):
+        # Créer un objet Blocked à partir de l'ami
+        blocked = Blocked(id=ami.id, username=ami.username, avatar_id=ami.avatar_id)
+        with self._conn:
+            self._conn.execute("INSERT OR IGNORE INTO blocked (id, username, avatar_id) VALUES (?, ?, ?)", (blocked.id, blocked.username, blocked.avatar_id))
+        self._blocked[blocked.id] = blocked
+
+    def unblock(self, id_:int):
         with self._conn:
             self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
-        self._blocked.discard(id_)  
+        self._blocked.pop(id_, None)  
 
     def set_statut_ami(self, id_: int, online: bool):
         """Met à jour le statut online/offline"""
@@ -186,7 +207,7 @@ class Cache:
             self._conn.execute("DELETE FROM cache_meta")
             self._conn.execute("DELETE FROM blocked")
         self._amis = {}
-        self._blocked = set()
+        self._blocked = {}
 
     # Lecture SQLite brute (usage interne uniquement)
 
@@ -194,9 +215,11 @@ class Cache:
         rows = self._conn.execute("SELECT id, username, avatar_id, mail, phone, date_of_birth FROM amis").fetchall()
         return [Ami(**dict(r)) for r in rows]
     
-    def _lire_blocked_sqlite(self) -> set[int]:
-        rows = self._conn.execute("SELECT id FROM blocked").fetchall()
-        return {r["id"] for r in rows}
+    def _lire_blocked_sqlite(self) -> dict[int, Blocked]:
+        rows = self._conn.execute("SELECT id, username, avatar_id FROM blocked").fetchall()
+        for r in rows:
+            print(f'r : {r["id"]}\ndict(r) : {dict(r)}')
+        return {r["id"]: Blocked(**dict(r)) for r in rows}
 
     # Cycle de vie
 

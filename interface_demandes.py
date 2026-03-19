@@ -59,7 +59,7 @@ class InterfaceDemandesRecues(QWidget):
         return widget_recues
 
     def accepter_demande(self, demande):
-        rep = self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, id_ami=demande.identifiant)
+        rep = self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, ami_id=demande.identifiant)
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)
             self.ami_accept.emit(rep.get('new_friend_id'))
@@ -70,7 +70,7 @@ class InterfaceDemandesRecues(QWidget):
             print(f"erreur lors de l'accpetation de {demande.nom}")
 
     def refuser_demande(self, demande):
-        rep = self.session.gestionnaire_amis.refuser_demande_ami(id_ami=demande.identifiant)
+        rep = self.session.gestionnaire_amis.refuser_demande_ami(ami_id=demande.identifiant)
         print(f'la rep : {rep}')
         if rep.get("status_code") == 200:
             self.demandes.remove(demande)

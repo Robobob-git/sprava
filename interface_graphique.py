@@ -71,6 +71,8 @@ class BoutonCustom(QPushButton):
 
         self.setFixedSize(*taille)
 
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+
         if texte:
             self.setText(texte)
         
@@ -329,12 +331,7 @@ class LigneCategorie(QWidget):
                 print(f"Catégorie {categorie} innexistante")
 
 def main():
-    app = QApplication(sys.argv)
-    app.setStyle("fusion")
-
-    fenetre = fenetre_principale()
-    fenetre.show()
-    sys.exit(app.exec())
+    pass
 
 if __name__ == "__main__":
     main()

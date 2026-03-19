@@ -22,6 +22,41 @@ from autre_fonctions import obtenir_vrai_chemin
             return self.id == autre.id
         return False"""
 
+class WidgetBlocked(QWidget):
+    ami_unblock = pyqtSignal(int)
+
+    def __init__(self, blocked_id:int, cache:Cache):
+        super().__init__()
+
+        self.blocked_id = blocked_id
+        self.cache = cache
+
+        self.blocked = cache.blocked_par_id(blocked_id)
+        if self.blocked:
+            self.layout = QHBoxLayout()
+            self.layout.setContentsMargins(10, 5, 10, 5)
+            
+            self._construire_widget()
+
+            self.setLayout(self.layout)
+        else:
+            print(f'{self.blocked_id} introuvable dans {cache.blocked_ids()}')
+        
+    def _construire_widget(self):
+        pp = QLabel()
+        '''pp.setPixmap(ami.pp)
+        avatar_label.setFixedSize(40, 40)'''
+        self.layout.addWidget(pp)
+
+        nom = QLabel(self.blocked.username)
+        self.layout.addWidget(nom)
+
+        self.layout.addStretch()
+
+        self.bouton_block = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/block.svg"), custom_command=lambda b=self.blocked_id: self.ami_unblock.emit(b))
+        self.layout.addWidget(self.bouton_block)
+        
+
 class WidgetAmi(QWidget):
     ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
     ami_block = pyqtSignal(int)
@@ -42,7 +77,7 @@ class WidgetAmi(QWidget):
             self.setLayout(self.layout)
         else:
             print(f'{self.ami_id} introuvable dans {cache.amis_ids()}')
-    
+
     def _construire_widget(self):
         pp = QLabel()
         '''pp.setPixmap(ami.pp)
@@ -62,11 +97,11 @@ class WidgetAmi(QWidget):
         if self.detaillee:
             self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami_id: self.lancer_conv(a))
 
-            self.action_retirer = QAction("Retirer l'ami")
-            self.action_retirer.triggered.connect(lambda checked, ami_id=self.ami_id: self.ami_remove.emit(ami_id))
-            self.action_bloquer = QAction("Bloquer l'ami")
-            self.action_bloquer.triggered.connect(lambda checked, ami_id=self.ami_id : self.ami_block.emit(ami_id))
-            self.menu = QMenu()
+            self.action_retirer = QAction("Retirer l'ami", self)
+            self.action_retirer.triggered.connect(lambda: self.ami_remove.emit(self.ami_id))
+            self.action_bloquer = QAction("Bloquer l'ami", self)
+            self.action_bloquer.triggered.connect(lambda: (print(f"Action bloquer déclenchée pour {self.ami_id}"), self.ami_block.emit(self.ami_id)))
+            self.menu = QMenu(self)
             self.menu.addAction(self.action_retirer)
             self.menu.addAction(self.action_bloquer)
             self.menu.setStyleSheet("""
@@ -93,9 +128,8 @@ class WidgetAmi(QWidget):
                     margin: 4px 10px;
                 }
             """)
-            self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
-            self.bouton_menu.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             '''self.bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"), custom_command=self.afficher_menu)'''
+            self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
 
 
 

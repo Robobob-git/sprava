@@ -171,9 +171,12 @@ class GestionAmis:
         print(f'on débloque {ami_id} : {rep}')
         return rep
     
-    def obtenir_blocked(self):
+    def obtenir_blocked_ids(self) -> list[int]:
         rep = self.gestionnaire_de_requetes.faire_requete(url="/me/blocked_users", type_de_r='get')
-        return rep
+        if rep.get('status_code') == 200:
+            return rep.get('blocked_users_ids')
+        else:
+            return
     
 class GestionConnexions:
     def __init__(self):

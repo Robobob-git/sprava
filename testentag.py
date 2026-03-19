@@ -28,9 +28,14 @@ def main():
 
 
     id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
-    print(id_amis1)
+    print(f'AMIS : {id_amis1}')
+    id_blocked1:list = gestionnaire_amis1.obtenir_blocked_ids()
+    print(f'BLOCKED : {id_blocked1}')
 
     if id_amis1 == []:
+        if id_blocked1:
+            for id_ in id_blocked1:
+                gestionnaire_amis1.debloquer_ami(id_)
         gestionnaire_amis2.demander_en_ami("p1")
         demandes_de_amis1 = gestionnaire_amis1.obtenir_demandes_amis_recues()
         print(f'amis 1 a : {demandes_de_amis1}')
@@ -44,7 +49,7 @@ def main():
         print(f"d'abord : {id_amis1}")
 
         print(f'user_id : {user_id2}')
-        gestionnaire_amis1.enlever_ami(id_ami=user_id2)
+        gestionnaire_amis1.enlever_ami(ami_id=user_id2)
 
         id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
         print(f"ensuite : {id_amis1}")

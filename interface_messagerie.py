@@ -6,6 +6,7 @@ from autre_fonctions import obtenir_vrai_chemin
 
 from interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
 from interface_amis import InterfaceAmis
+from interface_blocked import InterfaceBlocked
 from interface_ajouter_ami import InterfaceAjouterAmi
 from interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
 
@@ -104,6 +105,7 @@ class InterfaceMessagerie(QWidget):
         self.interface_amis.ami_remove.connect(self.remove_friend)
         self.interface_amis.ami_block.connect(self.block_friend)
         self.interface.addWidget(self.interface_blocked)
+        self.interface_blocked.ami_unblock.connect(self.unblock_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
 
         self.interface.addWidget(self.interface_demandes_recues)
@@ -147,7 +149,7 @@ class InterfaceMessagerie(QWidget):
         }
         """
         bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_ajouter_amis))
-        groupe_bouton_amis = GroupeBoutons([bouton_tous, bouton_ajouter])
+        groupe_bouton_amis = GroupeBoutons([bouton_tous, bouton_blocked, bouton_ajouter])
         bouton_tous.setChecked(True)
 
         layout_amis.addWidget(label_logo_amis)
@@ -203,25 +205,36 @@ class InterfaceMessagerie(QWidget):
         self.interface_amis.ajouter_ami(friend_id)
         self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.session.cache))
 
-    def remove_friend(self, friend_id:int):
-        print(f'self.liste_amis : {self.liste_amis}')
-        if friend_id not in self.liste_amis:
+    def remove_friend(self, friend_id:int, visuellement:bool=False):
+        if not visuellement and friend_id not in self.liste_amis:
             print(f"Impossible de retirer l'ami {friend_id} : introuvable dans self.liste_amis")
         else:
-            rep = self.session.gestionnaire_amis.enlever_ami(id_ami=friend_id)
-            if rep.get("status_code") != 200:
-                print(f"Erreur serveur lors de la suppression de {friend_id}")
-                return
-            
+            if not visuellement:
+                rep = self.session.gestionnaire_amis.enlever_ami(ami_id=friend_id)
+                if rep.get("status_code") != 200:
+                    print(f"Erreur serveur lors de la suppression de {friend_id}")
+                    return     
             self.session.cache.invalider_ami(friend_id)
             self.interface_amis.retirer_ami(friend_id)
             self.liste_amis.remove(friend_id)
             self.widget_colonne_contacts.retirer_item(data=friend_id)
     
     def block_friend(self, friend_id:int):
+        print(f"block_friend appelé avec {friend_id}")
         rep = self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id)
-        if rep.get("status_code") != 200:
+        if not rep or rep.get("status_code") != 200:
                 print(f"Erreur serveur lors du bloquage de {friend_id}")
                 return
+        print("succès")
         self.session.cache.block(friend_id)
-        self.remove_friend(friend_id)
+        self.interface_blocked.new_blocked(friend_id)
+        self.remove_friend(friend_id, True)
+
+    def unblock_friend(self, friend_id:int):
+        rep = self.session.gestionnaire_amis.debloquer_ami(friend_id)
+        if rep.get("status_code") != 200:
+            print(f"Erreur serveur lors du débloquage de {friend_id}")
+            return
+        self.session.cache.unblock(friend_id)
+        self.interface_blocked.unblock(friend_id)
+

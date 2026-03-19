@@ -11,7 +11,7 @@ from interface_login import InterfaceLogin
 
 #docs : http://161.35.17.40:8000/docs#/
 #proxy cmd : set HTTP_PROXY=http://192.168.228.254:3128&set HTTPS_PROXY=http://192.168.228.254:3128&git pull
-""
+
 # Exécution de l'application
 def main():
     import os

@@ -25,9 +25,9 @@ class InterfaceAmis(QWidget):
         self.setLayout(self.layout)
 
     def _construire_ui(self):
-        rechercher_ami = QLineEdit()
-        rechercher_ami.setPlaceholderText("Rechercher un ami...")
-        self.layout.addWidget(rechercher_ami)
+        self.rechercher_ami = QLineEdit()
+        self.rechercher_ami.setPlaceholderText("Rechercher un ami...")
+        self.layout.addWidget(self.rechercher_ami)
 
 
         '''self.liste_amis = QScrollArea()
@@ -44,8 +44,8 @@ class InterfaceAmis(QWidget):
         self.liste_amis = ListeElements()
         for ami_id in self.cache.amis_ids():
             widget_ami = WidgetAmi(ami_id, self.cache, True)
-            widget_ami.ami_remove.connect(lambda ami_id : self.ami_remove.emit(ami_id))    # On renvoie un signal plus haut vers interface_messagerie
-            widget_ami.ami_block.connect(lambda ami_id : self.ami_block.emit(ami_id))      # la même
+            widget_ami.ami_remove.connect(lambda id_: self.ami_remove.emit(id_))    # On renvoie un signal plus haut vers interface_messagerie
+            widget_ami.ami_block.connect(lambda id_: self.ami_block.emit(id_)) # la même
             self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
         self.liste_amis.itemClicked.connect(self.ami_clique)
         self.layout.addWidget(self.liste_amis)
@@ -55,10 +55,12 @@ class InterfaceAmis(QWidget):
         print(f"ami cliqué : {data}")
 
     def ajouter_ami(self, ami_id:int):
-        self.liste_amis.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache, True))
+        widget_ami = WidgetAmi(ami_id, self.cache, True)
+        widget_ami.ami_remove.connect(lambda id_: self.ami_remove.emit(id_))    # On renvoie un signal plus haut vers interface_messagerie
+        widget_ami.ami_block.connect(lambda id_: self.ami_block.emit(id_))  # la même
+        self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
 
     def retirer_ami(self, ami_id:int):
-        print(f"truc à retirer : {ami_id}")
         self.liste_amis.retirer_item(data=ami_id)
 
 
