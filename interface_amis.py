@@ -27,6 +27,7 @@ class InterfaceAmis(QWidget):
     def _construire_ui(self):
         self.rechercher_ami = QLineEdit()
         self.rechercher_ami.setPlaceholderText("Rechercher un ami...")
+        self.rechercher_ami.textChanged.connect(self.filtrer)
         self.layout.addWidget(self.rechercher_ami)
 
 
@@ -49,6 +50,18 @@ class InterfaceAmis(QWidget):
             self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
         self.liste_amis.itemClicked.connect(self.ami_clique)
         self.layout.addWidget(self.liste_amis)
+    
+    def filtrer(self, texte:str):
+        txt = texte.lower()
+
+        for i in range(self.liste_amis.count()):
+            item = self.liste_amis.item(i)
+            ami_id = item.data(Qt.ItemDataRole.UserRole)
+
+            ami = self.cache.ami_par_id(ami_id)
+            if ami:
+                nom_correspond = ami.username.lower().startswith(txt)
+                item.setHidden(not nom_correspond)  # Masquer si ne correspond pas
         
     def ami_clique(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)

@@ -84,7 +84,7 @@ class InterfaceDemandesRecues(QWidget):
         self.ui.setParent(None)
         self.ui.deleteLater()
 
-        self.ui = self._faire_ui
+        self.ui = self._faire_ui()
 
 class InterfaceDemandesEnvoyees(QWidget):
     def __init__(self, session):
@@ -137,7 +137,7 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.ui.setParent(None)
         self.ui.deleteLater()
 
-        self.ui = self._faire_ui
+        self.ui = self._faire_ui()
         
 
         

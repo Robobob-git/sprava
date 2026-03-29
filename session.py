@@ -1,5 +1,4 @@
 from cache import Cache
-from ws_client import WebSocketClient
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 
 class Session:

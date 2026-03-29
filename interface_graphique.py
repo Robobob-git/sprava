@@ -72,6 +72,7 @@ class BoutonCustom(QPushButton):
         self.setFixedSize(*taille)
 
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         if texte:
             self.setText(texte)

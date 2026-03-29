@@ -80,7 +80,7 @@ class InterfaceMessagerie(QWidget):
         
         widget_liste_extra_boutons = ListeElements(custom_command=self.extra_bouton_clique)
 
-        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends.png')))
+        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends_white.svg')))
         widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes.svg')))
 
 
@@ -125,7 +125,7 @@ class InterfaceMessagerie(QWidget):
 
 
         layout_amis = QHBoxLayout()
-        label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends.png"))
+        label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends_white.svg"))
         bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_amis))
         bouton_blocked = BoutonCustom(texte="Bloqués", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_blocked))
         style = """QPushButton {
@@ -179,7 +179,7 @@ class InterfaceMessagerie(QWidget):
         self.ligne_categorie.addWidget(self.categorie_demandes)
         self.ligne_categorie.setCurrentWidget(self.categorie_amis)
 
-        self.layout.addWidget(self.ligne_categorie, 0, 1)
+        self.layout.addWidget(self.ligne_categorie, 0, 1, Qt.AlignmentFlag.AlignTop)
 
     def extra_bouton_clique(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)

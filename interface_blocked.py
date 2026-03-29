@@ -20,9 +20,10 @@ class InterfaceBlocked(QWidget):
         self.setLayout(self.layout)
     
     def _construire_ui(self):
-        rechercher_blocked = QLineEdit()
-        rechercher_blocked.setPlaceholderText("Rechercher un ami...")
-        self.layout.addWidget(rechercher_blocked)
+        self.rechercher_blocked = QLineEdit()
+        self.rechercher_blocked.setPlaceholderText("Rechercher un ami...")
+        self.rechercher_blocked.textChanged.connect(self.filtrer)
+        self.layout.addWidget(self.rechercher_blocked)
 
         self.liste_blocked = ListeElements()
         for blocked_id in self.cache.blocked_ids():
@@ -30,6 +31,18 @@ class InterfaceBlocked(QWidget):
             widget_blocked.ami_unblock.connect(lambda b : self.ami_unblock.emit(b))
             self.liste_blocked.ajouter_item(data=blocked_id, widget=widget_blocked)
         self.layout.addWidget(self.liste_blocked)
+    
+    def filtrer(self, texte:str):
+        txt = texte.lower()
+
+        for i in range(self.liste_amis.count()):
+            item = self.liste_amis.item(i)
+            ami_id = item.data(Qt.ItemDataRole.UserRole)
+
+            ami = self.cache.ami_par_id(ami_id)
+            if ami:
+                nom_correspond = ami.username.lower().startswith(txt)
+                item.setHidden(not nom_correspond)  # Masquer si ne correspond pas
 
     def unblock(self, id_):
         self.liste_blocked.retirer_item(data=id_)

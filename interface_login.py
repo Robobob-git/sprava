@@ -52,14 +52,14 @@ class InterfaceLogin(QWidget):
         self.mail_widget_connexion = QLineEdit()
         self.mdp_widget_connexion = QLineEdit()
         self.mdp_widget_connexion.setEchoMode(QLineEdit.EchoMode.Password)
-        bouton_connexion = BoutonCustom(texte="Connexion", taille=(500, 40), custom_command=self.lancer_connexion)
+        bouton_connexion = BoutonCustom(texte="Connexion", taille=(400, 40), custom_command=self.lancer_connexion)
         switch_vers_inscription = texte_cliquable(texte_avant="Pas de compte ?", texte_a_cliquer="S'inscrire", action=self.changer_moyen_connexion)
 
         self.pseudo_widget = QLineEdit()
         self.mail_widget_inscription = QLineEdit()
-        self.confirmer_mail_widget_inscription = QLineEdit()
+        self.confirmer_mdp = QLineEdit()
         self.mdp_widget_inscription = QLineEdit()
-        self.confirmer_mail_widget_inscription.setEchoMode(QLineEdit.EchoMode.Password)
+        self.confirmer_mdp.setEchoMode(QLineEdit.EchoMode.Password)
         self.mdp_widget_inscription.setEchoMode(QLineEdit.EchoMode.Password)
         self.date_naiss_widget = QDateEdit()
         self.date_naiss_widget.setCalendarPopup(True)
@@ -67,7 +67,7 @@ class InterfaceLogin(QWidget):
         calendar.setStyleSheet("background:#202020; color:white;")
         self.date_naiss_widget.setCalendarWidget(calendar)
 
-        bouton_inscription = BoutonCustom(texte="Inscription", taille=(500, 40), custom_command=self.lancer_inscription)
+        bouton_inscription = BoutonCustom(texte="Inscription", taille=(400, 40), custom_command=self.lancer_inscription)
         switch_vers_connexion = texte_cliquable(texte_avant="Déjà un compte ?", texte_a_cliquer="Se connecter", action=self.changer_moyen_connexion)
 
 
@@ -84,16 +84,20 @@ class InterfaceLogin(QWidget):
         ajouter_au_layout_avec_titre("Pseudonyme", self.pseudo_widget, inscription_layout)
         ajouter_au_layout_avec_titre("E-mail", self.mail_widget_inscription, inscription_layout)
         ajouter_au_layout_avec_titre("Mot de passe", self.mdp_widget_inscription, inscription_layout)
-        ajouter_au_layout_avec_titre("Confirmer mot de passe", self.confirmer_mail_widget_inscription, inscription_layout)
+        ajouter_au_layout_avec_titre("Confirmer mot de passe", self.confirmer_mdp, inscription_layout)
         ajouter_au_layout_avec_titre("Date de naissance", self.date_naiss_widget, inscription_layout)
         inscription_layout.addWidget(bouton_inscription, alignment=Qt.AlignmentFlag.AlignCenter)
         inscription_layout.addWidget(switch_vers_connexion)
         self.inscription_widget.setLayout(inscription_layout)
 
+        self.central = QWidget()
+        self.central.setMaximumWidth(450)
+        self.central_layout = QVBoxLayout()
+        self.central.setLayout(self.central_layout)
 
-
-        self.layout.addWidget(self.connexion_widget, 0, 0)
-        self.layout.addWidget(self.inscription_widget, 1, 0)
+        self.central_layout.addWidget(self.connexion_widget)
+        self.central_layout.addWidget(self.inscription_widget)
+        self.layout.addWidget(self.central, 0, 0, Qt.AlignmentFlag.AlignCenter)
 
         self.connexion_widget.show()
         self.inscription_widget.hide()
@@ -124,8 +128,8 @@ class InterfaceLogin(QWidget):
             print(f'Veuillez renseigner le mail et le mot de passe')
     
     def lancer_inscription(self):
-        if self.pseudo_widget.text() != "" and self.mail_widget_inscription.text() != "" and self.mdp_widget_inscription.text() != "" and self.confirmer_mail_widget_inscription.text() != "" and self.date_naiss_widget.date().toString("yyyy-MM-dd") != "":
-            if self.mdp_widget_inscription.text() == self.confirmer_mail_widget_inscription.text():
+        if self.pseudo_widget.text() != "" and self.mail_widget_inscription.text() != "" and self.mdp_widget_inscription.text() != "" and self.confirmer_mdp.text() != "" and self.date_naiss_widget.date().toString("yyyy-MM-dd") != "":
+            if self.mdp_widget_inscription.text() == self.confirmer_mdp.text():
                 print(self.date_naiss_widget.date().toString("yyyy-MM-dd"))
                 rep = self.gestionnaire_connexions.inscription(pseudo=self.pseudo_widget.text(), mail=self.mail_widget_inscription.text(), mdp=self.mdp_widget_inscription.text(), date_naissance=self.date_naiss_widget.date().toString("yyyy-MM-dd"))
                 print(f'rep : {rep}')

@@ -1,6 +1,6 @@
 import requests
 
-LIEN_API = "http://161.35.17.40:8000" 
+LIEN_API = "https://api.sprava.top/" 
 
 class GestionRequetes:
     def __init__(self, token=None):
@@ -20,6 +20,9 @@ class GestionRequetes:
         
         elif type_de_r == 'delete':
             rep = requests.delete(f"{LIEN_API}{url}", headers=headers, json=body)
+
+        elif type_de_r == 'put':
+            rep = requests.put(f"{LIEN_API}{url}", headers=headers, json=body)
 
         else:
             print(f"Erreur, ce type de requete n'est pas renseigné : {type_de_r}")
@@ -128,7 +131,7 @@ class GestionAmis:
         return rep
 
     def accepter_demande_ami(self, nom_ami:str=None, ami_id:int=None):
-        if not nom_ami and ami_id:
+        if not nom_ami and not ami_id:
             return
         elif nom_ami:
             ami_id = self.gestion_utilisateurs.obtenir_id(nom_ami)
@@ -173,7 +176,7 @@ class GestionAmis:
     
     def obtenir_blocked_ids(self) -> list[int]:
         rep = self.gestionnaire_de_requetes.faire_requete(url="/me/blocked_users", type_de_r='get')
-        if rep.get('status_code') == 200:
+        if rep and rep.get('status_code') == 200:
             return rep.get('blocked_users_ids')
         else:
             return
@@ -198,6 +201,45 @@ class GestionConnexions:
         else:
             print(rep)
             return rep
+
+class GestionConversations:
+    def __init__(self, token):
+        self.token = token
+
+        self.gestionnaire_de_requetes = GestionRequetes(token=self.token)
+    
+    def creer_conv(self, ami_id:int):
+        body = {"user2_id" : ami_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url="/create_conversation", body=body, type_de_r='post')
+        return rep
+    
+    def supprimer_conv(self, conv_id:int):
+        body = {"conversation_id" : conv_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url="/delete_conversation", body=body, type_de_r='delete')
+        return rep
+    
+    def obtenir_convs(self):
+        rep = self.gestionnaire_de_requetes.faire_requete(url="/me/conversations", type_de_r='get')
+        return rep
+    
+    def obtenir_msgs(self, conv_id:int, limite:int=50, offset:int=0):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/messages?conversation_id={conv_id}", type_de_r='get')
+        return rep
+    
+    def envoyer_msg(self, conv_id:int, msg:str):
+        body = {"conversation_id" : conv_id, "content" : msg}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/send_message", body=body, type_de_r='post')
+        return rep
+    
+    def supprimer_msg(self, msg_id:int):
+        body = {"message_id" : msg_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/delete_message", body=body, type_de_r='delete')
+        return rep
+    
+    def marquer_lu(self, conv_id:int):
+        body = {"conversation_id" : conv_id}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/read", body=body, type_de_r='put')
+        return rep
 
 class GestionMedia:
     def __init__(self, token:str):
