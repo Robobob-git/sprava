@@ -1,6 +1,6 @@
 import requests
 
-LIEN_API = "https://api.sprava.top/" 
+LIEN_API = "https://sprava-api-fc44f5e02dd0.herokuapp.com/" 
 
 class GestionRequetes:
     def __init__(self, token=None):
