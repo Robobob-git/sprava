@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from dataclasses import dataclass
 
-from gestionnaires_requetes import GestionAmis
 from interfaces.interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
 
