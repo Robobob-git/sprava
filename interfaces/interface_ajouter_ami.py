@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
-from interface_graphique import BoutonCustom
+from interfaces.interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
     def __init__(self, session):
@@ -85,14 +85,14 @@ class InterfaceAjouterAmi(QWidget):
         self.layout.addStretch()
 
     def envoyer_demande(self):
-        nom = self.recherche_qqn.text()
-        rep = self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom)
-
-        if rep.get('status_code') == 404:
-            print("utilisateur introuvable")
-            return
-
-        elif rep.get('status_code') == 200:
+        def succes(rep):
             print('Demande envoyée avec succès')
             son_id = rep.get('receiver_id')
+            print(f'rep : {rep}')
+
+        def erreur(e):
+            print("Erreur lors de l'envoi de la demande")
+
+        nom = self.recherche_qqn.text()
+        self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom), func_succes=succes, func_erreur=erreur)
 

@@ -1,27 +1,7 @@
-"""
-Gestionnaire de requêtes HTTP asynchrones avec QThread pour PyQt6.
-
-Ce module fournit un système de worker/thread permettant d'exécuter
-les requêtes HTTP sans bloquer l'interface utilisateur PyQt6.
-
-Usage:
-    # Dans votre interface PyQt6
-    manager = ThreadedRequestManager()
-    
-    # Exécuter une méthode de façon asynchrone
-    manager.execute(
-        method=lambda: self.gestionnaire_connexions.connexion(mail="test@example.com", mdp="password"),
-        on_success=self.handle_success,
-        on_error=self.handle_error
-    )
-"""
-
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
-from typing import Callable, Any, Optional
-import traceback
 
 
-class RequestWorker(QObject):
+class RequettesWorker(QObject):
     """
     Worker qui exécute une requête dans un thread séparé.
     
@@ -31,35 +11,34 @@ class RequestWorker(QObject):
         finished: Émis à la fin de l'exécution (succès ou erreur)
     """
     
-    success = pyqtSignal(object)  # Résultat de la requête
-    error = pyqtSignal(Exception)  # Exception en cas d'erreur
-    finished = pyqtSignal()  # Signal de fin
+    succes = pyqtSignal(object)  # Résultat de la requête
+    erreur = pyqtSignal(Exception)
+    fini = pyqtSignal()  # Signal de fin
     
-    def __init__(self, method: Callable[[], Any]):
+    def __init__(self, func):
         """
         Args:
-            method: La fonction/méthode à exécuter (sans arguments)
+            func: La fonction/méthode à exécuter (sans arguments)
         """
         super().__init__()
-        self.method = method
+        self.func = func
         self._is_running = False
     
     def run(self):
-        """Exécute la méthode et émet les signaux appropriés."""
         self._is_running = True
         try:
-            result = self.method()
-            self.success.emit(result)
+            resultat = self.func()
+            self.succes.emit(resultat)
+            print(f'resultat : {resultat}')
         except Exception as e:
-            print(f"[RequestWorker] Erreur: {e}")
-            traceback.print_exc()
-            self.error.emit(e)
+            print(f"[RequettesWorker] Erreur: {e}")
+            self.erreur.emit(e)
         finally:
             self._is_running = False
-            self.finished.emit()
+            self.fini.emit()
 
 
-class ThreadedRequestManager:
+class RequettesManager:
     """
     Gestionnaire de requêtes threadées pour PyQt6.
     
@@ -68,15 +47,10 @@ class ThreadedRequestManager:
     """
     
     def __init__(self):
-        self.active_threads = []
+        self.threads_actifs = []
+        self.workers_actifs = []
     
-    def execute(
-        self,
-        method: Callable[[], Any],
-        on_success: Optional[Callable[[Any], None]] = None,
-        on_error: Optional[Callable[[Exception], None]] = None,
-        on_finished: Optional[Callable[[], None]] = None
-    ):
+    def executer(self, func, func_succes = None, func_erreur = None, func_fini = None):
         """
         Exécute une méthode de façon asynchrone dans un thread séparé.
         
@@ -89,15 +63,14 @@ class ThreadedRequestManager:
             on_finished: Callback appelé à la fin (succès ou erreur)
         
         Exemple:
-            manager.execute(
+            manager.executer(
                 method=lambda: self.gestionnaire.obtenir_amis(toutes_infos=True),
-                on_success=lambda result: print(f"Amis: {result}"),
-                on_error=lambda e: print(f"Erreur: {e}")
+                on_success=lambda resultat: print(f"Amis: {resultat}"),
             )
         """
         # Créer le thread et le worker
         thread = QThread()
-        worker = RequestWorker(method)
+        worker = RequettesWorker(func)
         
         # Déplacer le worker dans le thread
         worker.moveToThread(thread)
@@ -105,25 +78,28 @@ class ThreadedRequestManager:
         # Connecter les signaux
         thread.started.connect(worker.run)
         
-        if on_success:
-            worker.success.connect(on_success)
-        
-        if on_error:
-            worker.error.connect(on_error)
+        if func_succes:
+            worker.succes.connect(func_succes)
+
+        if func_erreur:
+            worker.erreur.connect(func_erreur)
         
         # Cleanup automatique à la fin
         def cleanup():
-            if on_finished:
-                on_finished()
+            if func_fini:
+                func_fini()
             thread.quit()
             thread.wait()
-            if thread in self.active_threads:
-                self.active_threads.remove(thread)
+            if thread in self.threads_actifs:
+                self.threads_actifs.remove(thread)
+            if worker in self.workers_actifs:
+                self.workers_actifs.remove(worker)
         
-        worker.finished.connect(cleanup)
+        worker.fini.connect(cleanup)
         
-        # Garder une référence au thread pour éviter le garbage collection
-        self.active_threads.append(thread)
+        # Garder une référence au thread ET au worker pour éviter le garbage collection
+        self.threads_actifs.append(thread)
+        self.workers_actifs.append(worker)
         
         # Démarrer le thread
         thread.start()
@@ -133,46 +109,9 @@ class ThreadedRequestManager:
         Arrête tous les threads actifs et attend leur terminaison.
         À appeler avant de fermer l'application.
         """
-        for thread in self.active_threads:
+        for thread in self.threads_actifs:
             if thread.isRunning():
                 thread.quit()
                 thread.wait()
-        self.active_threads.clear()
-
-
-class SimpleThreadedRequestManager:
-    """
-    Version simplifiée qui exécute directement une fonction et gère le résultat.
-    
-    Utilisation encore plus simple pour les cas courants.
-    """
-    
-    def __init__(self):
-        self.manager = ThreadedRequestManager()
-    
-    def execute_simple(
-        self,
-        request_func: Callable[[], Any],
-        success_callback: Callable[[Any], None],
-        error_message: str = "Une erreur est survenue"
-    ):
-        """
-        Exécute une requête avec gestion d'erreur simplifiée.
-        
-        Args:
-            request_func: Fonction qui fait la requête
-            success_callback: Fonction appelée avec le résultat si succès
-            error_message: Message d'erreur par défaut
-        """
-        def on_error(e):
-            print(f"{error_message}: {e}")
-        
-        self.manager.execute(
-            method=request_func,
-            on_success=success_callback,
-            on_error=on_error
-        )
-    
-    def cleanup_all(self):
-        """Nettoie tous les threads."""
-        self.manager.cleanup_all()
+        self.threads_actifs.clear()
+        self.workers_actifs.clear()

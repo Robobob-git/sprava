@@ -2,12 +2,13 @@ from cache import Cache
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 
 class Session:
-    def __init__(self, user_info:dict, token:str):
+    def __init__(self, user_info:dict, token:str, requettes_manager):
         self.token = token
         self.user_info = user_info
         self.user_id = user_info.get("user_id")
 
         self.cache = Cache(self.user_id)
+        self.requettes_manager = requettes_manager
         self.gestionnaire_amis = GestionAmis(token=token)
         self.gestionnaire_utilisateurs = GestionUtilisateurs(token=token)
 

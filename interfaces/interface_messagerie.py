@@ -4,11 +4,11 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from autre_fonctions import obtenir_vrai_chemin
 
-from interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
-from interface_amis import InterfaceAmis
-from interface_blocked import InterfaceBlocked
-from interface_ajouter_ami import InterfaceAjouterAmi
-from interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
+from interfaces.interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
+from interfaces.interface_amis import InterfaceAmis
+from interfaces.interface_blocked import InterfaceBlocked
+from interfaces.interface_ajouter_ami import InterfaceAjouterAmi
+from interfaces.interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
 
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 from cache import Cache, Ami
@@ -39,6 +39,9 @@ class InterfaceMessagerie(QWidget):
         super().__init__()
         self.fenetre_principale = fenetre_principale
         self.session = session
+        
+        self.requettes_manager = session.requettes_manager
+        self.cache = session.cache
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -46,7 +49,7 @@ class InterfaceMessagerie(QWidget):
         '''self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)'''
 
-        self.liste_amis = self.session.cache.amis_ids()
+        self.liste_amis = self.cache.amis_ids()
         
         self._faire_ui()
 
@@ -71,7 +74,7 @@ class InterfaceMessagerie(QWidget):
 
         self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
         for ami_id in self.liste_amis:
-            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.session.cache))
+            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
 
 
         widget_logo = QLabel()
@@ -199,42 +202,57 @@ class InterfaceMessagerie(QWidget):
     def new_friend(self, friend_id:int):
         infos = self.session.gestionnaire_utilisateurs.obtenir_infos(id_=friend_id)
         ami = Ami.depuis_dict(infos)
-        self.session.cache.upsert_ami(ami)
+        self.cache.upsert_ami(ami)
 
         self.liste_amis.append(friend_id)
         self.interface_amis.ajouter_ami(friend_id)
-        self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.session.cache))
+        self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.cache))
 
     def remove_friend(self, friend_id:int, visuellement:bool=False):
         if not visuellement and friend_id not in self.liste_amis:
             print(f"Impossible de retirer l'ami {friend_id} : introuvable dans self.liste_amis")
         else:
-            if not visuellement:
-                rep = self.session.gestionnaire_amis.enlever_ami(ami_id=friend_id)
-                if rep.get("status_code") != 200:
-                    print(f"Erreur serveur lors de la suppression de {friend_id}")
-                    return     
-            self.session.cache.invalider_ami(friend_id)
-            self.interface_amis.retirer_ami(friend_id)
-            self.liste_amis.remove(friend_id)
-            self.widget_colonne_contacts.retirer_item(data=friend_id)
+            if visuellement:
+                self.cache.invalider_ami(friend_id)
+                self.interface_amis.retirer_ami(friend_id)
+                self.liste_amis.remove(friend_id)
+                self.widget_colonne_contacts.retirer_item(data=friend_id)
+            else:
+                def succes(rep):
+                    self.cache.invalider_ami(friend_id)
+                    self.interface_amis.retirer_ami(friend_id)
+                    self.liste_amis.remove(friend_id)
+                    self.widget_colonne_contacts.retirer_item(data=friend_id)
+
+                def erreur(e):
+                    print(f"Erreur serveur lors de la suppression de {friend_id} : {e}")
+                    return
+                
+                self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.enlever_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
     
     def block_friend(self, friend_id:int):
         print(f"block_friend appelé avec {friend_id}")
-        rep = self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id)
-        if not rep or rep.get("status_code") != 200:
-                print(f"Erreur serveur lors du bloquage de {friend_id}")
-                return
-        print("succès")
-        self.session.cache.block(friend_id)
-        self.interface_blocked.new_blocked(friend_id)
-        self.remove_friend(friend_id, True)
+
+        def succes(rep):
+            print("succès")
+            self.cache.block(friend_id)
+            self.interface_blocked.new_blocked(friend_id)
+            self.remove_friend(friend_id, True)
+
+        def erreur(e):
+            print(f"Erreur serveur lors du bloquage de {friend_id} : {e}")
+            return
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
+
 
     def unblock_friend(self, friend_id:int):
-        rep = self.session.gestionnaire_amis.debloquer_ami(friend_id)
-        if rep.get("status_code") != 200:
-            print(f"Erreur serveur lors du débloquage de {friend_id}")
-            return
-        self.session.cache.unblock(friend_id)
-        self.interface_blocked.unblock(friend_id)
+        def succes(rep):
+            self.cache.unblock(friend_id)
+            self.interface_blocked.unblock(friend_id)
+        
+        def erreur(e):
+            print(f"Erreur serveur lors du débloquage de {friend_id} : {e}")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.debloquer_ami(friend_id), func_succes=succes, func_erreur=erreur)
 

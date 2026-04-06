@@ -4,7 +4,7 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from dataclasses import dataclass
 
 from gestionnaires_requetes import GestionAmis
-from interface_graphique import ListeElements, BoutonCustom
+from interfaces.interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
 
 @dataclass
@@ -19,27 +19,31 @@ class InterfaceDemandesRecues(QWidget):
         super().__init__()
 
         self.session = session
+        self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         self.demandes:list[Demande] = []
-        self.demandes = self._trouver_demandes_recues()
-        print(f'self.demandes : {self.demandes}')
+        self._trouver_demandes_recues()
 
         self.ui = self._faire_ui()
 
     def _trouver_demandes_recues(self):
-        rep = self.session.gestionnaire_amis.obtenir_demandes_amis_recues() # La réponse est de la forme : {'status_code': 200, 'friend_requests_ids': [{'sender_id': 17, 'created_at': '2026-02-11T09:58:13'}]}
-        print(rep)
-
-        if rep.get('status_code') == 200:
+        def succes(rep):
             if rep.get('friend_requests_ids') == []:
-                return []
+                self.demandes = []
+                self.ui = self._faire_ui()
+                return
             liste_ids = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
             liste_noms = self.session.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
 
-            return [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
+            self.demandes = [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
+            self.ui = self._faire_ui()
+            return
+        
+        self.requettes_manager.executer(func=self.session.gestionnaire_amis.obtenir_demandes_amis_recues, func_succes=succes)
+        # La réponse est de la forme : {'status_code': 200, 'friend_requests_ids': [{'sender_id': 17, 'created_at': '2026-02-11T09:58:13'}]}
 
     def _faire_ui(self):
         widget_recues = ListeElements()
@@ -59,24 +63,24 @@ class InterfaceDemandesRecues(QWidget):
         return widget_recues
 
     def accepter_demande(self, demande):
-        rep = self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, ami_id=demande.identifiant)
-        if rep.get("status_code") == 200:
+        def succes(rep):
             self.demandes.remove(demande)
             self.ami_accept.emit(rep.get('new_friend_id'))
 
-
             self.update_ui()
-        else:
-            print(f"erreur lors de l'accpetation de {demande.nom}")
+        def erreur(e):
+            print(f"erreur lors de l'accpetation de {demande.nom} : {e}")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, ami_id=demande.identifiant), func_succes=succes, func_erreur=erreur)
 
     def refuser_demande(self, demande):
-        rep = self.session.gestionnaire_amis.refuser_demande_ami(ami_id=demande.identifiant)
-        print(f'la rep : {rep}')
-        if rep.get("status_code") == 200:
+        def succes(rep):
             self.demandes.remove(demande)
             self.update_ui()
-        else:
-            print(f"erreur lors de la rejection de la demande de {demande.nom}")
+        def erreur(e):
+            print(f"erreur lors de la rejection de la demande de {demande.nom} : {e}")
+        
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.refuser_demande_ami(ami_id=demande.identifiant), func_succes=succes, func_erreur=erreur)
 
     def update_ui(self):
         '''On supprime le widget pour le raffraichir'''
@@ -91,22 +95,31 @@ class InterfaceDemandesEnvoyees(QWidget):
         super().__init__()
 
         self.session = session
+        self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.demandes = self._trouver_demandes_envoyees()
+        self.demandes = []
+        self._trouver_demandes_envoyees()
+
         self.ui = self._faire_ui()
     
     def _trouver_demandes_envoyees(self):
-        rep = self.session.gestionnaire_amis.obtenir_demandes_amis_envoyees()
-        if rep.get('status_code') == 200:
+        def succes(rep):
             if rep.get('sent_friend_requests_ids') == []:
-                return []
+                self.demandes = []
+                self.ui = self._faire_ui()
+                return
             liste_ids = [fr.get('receiver_id') for fr in rep.get('sent_friend_requests_ids')]
             liste_noms = self.session.gestionnaire_utilisateurs.obtenir_noms(ids=liste_ids)
             
-            return [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
+            self.demandes = [Demande(nom, id_) for nom, id_ in zip(liste_noms, liste_ids)]
+            self.ui = self._faire_ui()
+            return
+        
+        self.requettes_manager.executer(func=self.session.gestionnaire_amis.obtenir_demandes_amis_envoyees, func_succes=succes)
+
 
     def _faire_ui(self):
         widget_envoyees = ListeElements()
@@ -124,12 +137,15 @@ class InterfaceDemandesEnvoyees(QWidget):
         return widget_envoyees
     
     def annuler_demande(self, demande):
-        rep = self.session.gestionnaire_amis.annuler_demande_ami(nom_ami=demande.nom)
-        if rep.get("status_code") == 200:
+        def succes(rep):
             self.demandes.remove(demande)
             self.update_ui()
-        else:
-            print(f"erreur lors de l'annulation de la demande pour {demande.nom}")
+
+            self.update_ui()
+        def erreur(e):
+            print(f"erreur lors de l'annulation de la demande pour {demande.nom} : {e}")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.annuler_demande_ami(nom_ami=demande.nom), func_succes=succes, func_erreur=erreur)
 
     def update_ui(self):
         '''On supprime le widget pour le raffraichir'''

@@ -4,7 +4,7 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from amis import WidgetBlocked
 from autre_fonctions import obtenir_vrai_chemin
-from interface_graphique import GroupeBoutons, BoutonCustom, ListeElements, TexteEtImage
+from interfaces.interface_graphique import GroupeBoutons, BoutonCustom, ListeElements, TexteEtImage
 
 class InterfaceBlocked(QWidget):
     ami_unblock = pyqtSignal(int)

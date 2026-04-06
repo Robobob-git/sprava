@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
 from cache import Cache
-from interface_graphique import BoutonCustom, BoutonMenu
+from interfaces.interface_graphique import BoutonCustom, BoutonMenu
 from autre_fonctions import obtenir_vrai_chemin
 
 """class Ami:

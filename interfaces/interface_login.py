@@ -2,9 +2,10 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QDateEdit, QCalendarWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
-from interface_graphique import BoutonCustom
+from interfaces.interface_graphique import BoutonCustom
+from gestionnaire_threaded import RequettesManager
 from gestionnaires_requetes import GestionConnexions
-from interface_messagerie import InterfaceMessagerie
+from interfaces.interface_messagerie import InterfaceMessagerie
 from session import Session
 
 class InterfaceLogin(QWidget):
@@ -19,6 +20,7 @@ class InterfaceLogin(QWidget):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
+        self.requettes_manager = RequettesManager()
         self.gestionnaire_connexions = GestionConnexions()
 
         self.moyen_connexion_actuel = "Connexion"
@@ -114,9 +116,8 @@ class InterfaceLogin(QWidget):
             self.moyen_connexion_actuel = "Connexion"
 
     def lancer_connexion(self):
-        if self.mail_widget_connexion.text() != "" and self.mdp_widget_connexion.text() != "":
-            rep = self.gestionnaire_connexions.connexion(mail=self.mail_widget_connexion.text(), mdp=self.mdp_widget_connexion.text())
-
+        def succes(rep):
+            print("AAAAAAAAAAAAAAAAAA")
             if rep:
                 self.token = rep.pop('api_token')
                 rep.pop('status_code')
@@ -124,18 +125,20 @@ class InterfaceLogin(QWidget):
                 self.connexion_confirmee()
             else:
                 print(f"Connexion échouée")
+        def erreur(e):
+            print(f"Erreur lors de la connexion: {e}")
+
+
+        if self.mail_widget_connexion.text() != "" and self.mdp_widget_connexion.text() != "":
+            mail=self.mail_widget_connexion.text()
+            mdp=self.mdp_widget_connexion.text()
+            self.requettes_manager.executer(func=lambda : self.gestionnaire_connexions.connexion(mail, mdp), func_succes=succes, func_erreur=erreur)
         else:
             print(f'Veuillez renseigner le mail et le mot de passe')
+
     
     def lancer_inscription(self):
-        if self.pseudo_widget.text() != "" and self.mail_widget_inscription.text() != "" and self.mdp_widget_inscription.text() != "" and self.confirmer_mdp.text() != "" and self.date_naiss_widget.date().toString("yyyy-MM-dd") != "":
-            if self.mdp_widget_inscription.text() == self.confirmer_mdp.text():
-                print(self.date_naiss_widget.date().toString("yyyy-MM-dd"))
-                rep = self.gestionnaire_connexions.inscription(pseudo=self.pseudo_widget.text(), mail=self.mail_widget_inscription.text(), mdp=self.mdp_widget_inscription.text(), date_naissance=self.date_naiss_widget.date().toString("yyyy-MM-dd"))
-                print(f'rep : {rep}')
-            else:
-                print("Les mots de passe ne correspondent pas")
-
+        def succes(rep):
             if rep:
                 self.token = rep.pop('api_token')
                 rep.pop('status_code')
@@ -143,13 +146,28 @@ class InterfaceLogin(QWidget):
                 self.inscription_confirmee()
             else:
                 print(f"Inscription échouée")
+        def erreur(e):
+            print(f"Erreur lors de la connexion: {e}")
+
+
+        if self.pseudo_widget.text() != "" and self.mail_widget_inscription.text() != "" and self.mdp_widget_inscription.text() != "" and self.confirmer_mdp.text() != "" and self.date_naiss_widget.date().toString("yyyy-MM-dd") != "":
+            if self.mdp_widget_inscription.text() == self.confirmer_mdp.text():
+                pseudo = self.pseudo_widget.text()
+                mail = self.mail_widget_inscription.text()
+                mdp = self.mdp_widget_inscription.text()
+                date_naissance = self.date_naiss_widget.date().toString("yyyy-MM-dd")
+                self.requettes_manager.executer(func=lambda : self.gestionnaire_connexions.inscription(pseudo, mail, mdp, date_naissance), func_succes=succes, func_erreur=erreur) 
+            
+            else:
+                print("Les mots de passe ne correspondent pas")
         else:
             print(f'Veuillez renseigner correctement tous les champs')
+
     
     def connexion_confirmee(self):
         print(f"token : {self.token}")
         print("Connecté avec succès")
-        self.session = Session(user_info=self.user_info, token=self.token)
+        self.session = Session(user_info=self.user_info, token=self.token, requettes_manager=self.requettes_manager)
         interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
         self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
         self.fenetre_principale.changer_interface(interface_messagerie)
