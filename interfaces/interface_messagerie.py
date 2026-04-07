@@ -9,6 +9,7 @@ from interfaces.interface_amis import InterfaceAmis
 from interfaces.interface_blocked import InterfaceBlocked
 from interfaces.interface_ajouter_ami import InterfaceAjouterAmi
 from interfaces.interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
+from interfaces.interface_mp import MpManager
 
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 from cache import Cache, Ami
@@ -104,6 +105,9 @@ class InterfaceMessagerie(QWidget):
         self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session)
         self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session)
 
+        self.mp_manager = MpManager(session=self.session)
+        self.interface_mp = self.mp_manager.widget_conv
+
         self.interface.addWidget(self.interface_amis)
         self.interface_amis.ami_remove.connect(self.remove_friend)
         self.interface_amis.ami_block.connect(self.block_friend)
@@ -114,6 +118,8 @@ class InterfaceMessagerie(QWidget):
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
         self.interface_demandes_recues.ami_accept.connect(self.new_friend)
+
+        self.interface.addWidget(self.interface_mp)
 
         self.interface.setCurrentWidget(self.interface_amis)
 
@@ -198,6 +204,10 @@ class InterfaceMessagerie(QWidget):
     def contact_clique(self, item):
         ami_id = item.data(Qt.ItemDataRole.UserRole)
         print(f"Ami id cliqué : {ami_id}")
+        self.mp_manager.choisir_conv(ami_id)
+
+        self.changer_interface(self.interface_mp)
+
 
     def new_friend(self, friend_id:int):
         infos = self.session.gestionnaire_utilisateurs.obtenir_infos(id_=friend_id)

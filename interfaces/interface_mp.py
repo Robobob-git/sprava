@@ -1,9 +1,23 @@
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from datetime import datetime
 
 from interfaces.interface_graphique import BoutonCustom
+
+class MpManager:
+    def __init__(self, session):
+        self.session = session
+
+        self.mps = {}
+        self.widget_conv = QStackedWidget()
+
+    def choisir_conv(self, ami_id) -> None:
+        if ami_id not in self.mps.keys():
+            mp = InterfaceMP(ami_id, self.session)
+            self.mps[ami_id] = mp
+            self.widget_conv.addWidget(mp)
+        self.widget_conv.setCurrentWidget(self.mps[ami_id])
 
 class MessageWidget(QWidget):
     def __init__(self, auteur:str, heure:str, message:str, avatar=None, montrer_header=True):
@@ -60,9 +74,8 @@ class MessageWidget(QWidget):
         self.layout.addLayout(msg_layout)
         self.layout.addStrech()
 
-
 class InterfaceMP(QWidget):
-    envoi_message = pyqtSignal(str)
+    envoi_msg = pyqtSignal(str)
 
     def __init__(self, ami_id, session):
         super().__init__()
@@ -81,7 +94,6 @@ class InterfaceMP(QWidget):
         self._faire_ui()
     
     def _faire_ui(self):
-        self.wiget_total = QWidget()
         '''self.windget_total.setContentsMargins(0, 0, 0, 0)
         self.windget_total.setSpacing(0)'''
 
@@ -121,6 +133,7 @@ class InterfaceMP(QWidget):
 
         self.ecrire_widget = QWidget()
         self.ecrire_layout = QHBoxLayout()
+        self.ecrire_widget.setLayout(self.ecrire_layout)
 
         self.ecrire_msg = QLineEdit()
         self.ecrire_msg.setPlaceholderText(f'Envoyer un message à {self.ami.username}')
@@ -132,17 +145,26 @@ class InterfaceMP(QWidget):
                 color: white;
                 border: none;
                 border-radius: 5px;
-                padding: 10px 20px;
                 font-weight: bold;
+            }
+            QPushButton QLabel {
+            font-size: 13px;
             }
             QPushButton:hover {
                 background-color: #4752c4;
             }
+            QPushButton:focus {
+            outline: none;
+            border: none;
+            }
         """
-        self.bouton_envoyer = BoutonCustom(texte="Envoyer", style=style, custom_command=self.envoyer_message)
+        self.bouton_envoyer = BoutonCustom(texte="Envoyer", taille=(100, 30), style=style, custom_command=self.envoyer_message)
 
         self.ecrire_layout.addWidget(self.ecrire_msg)
         self.ecrire_layout.addWidget(self.bouton_envoyer)
+
+        self.layout.addWidget(self.conv)
+        self.layout.addWidget(self.ecrire_widget)
     
     def ajouter_message(self, auteur:str, message:str, heure=None, avatar=None):
         if heure is None:
@@ -163,6 +185,6 @@ class InterfaceMP(QWidget):
     def envoyer_message(self):
         texte = self.ecrire_msg.text().strip()
         if texte:
-            self.envoi_message.emit(texte)
+            self.envoi_msg.emit(texte)
 
 
