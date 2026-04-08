@@ -60,6 +60,7 @@ class WidgetBlocked(QWidget):
 class WidgetAmi(QWidget):
     ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
     ami_block = pyqtSignal(int)
+    start_conv = pyqtSignal(int)
 
     def __init__(self, ami_id:int, cache:Cache, detaillee:bool=False):
         super().__init__()
@@ -144,5 +145,6 @@ class WidgetAmi(QWidget):
         print(f"bouton_pos : {bouton_pos}")
         self.menu.popup(bouton_pos)
     
-    def lancer_conv(self, ami_id):
+    def lancer_conv(self, ami_id:int):
         print(f'bonjour amongus : {ami_id}')
+        self.start_conv.emit(ami_id)

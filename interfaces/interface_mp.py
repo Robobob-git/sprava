@@ -3,7 +3,20 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from datetime import datetime
 
-from interfaces.interface_graphique import BoutonCustom
+from interfaces.interface_graphique import BoutonCustom, TexteEtImage
+
+class HeaderMP(QWidget):
+    def __init__(self): 
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+        self.setLayout(self.layout)
+
+        self.header = None
+    
+    def changer_header(self, ami_id, cache):
+        ami = cache.ami_par_id(ami_id)
+        self.header = None
 
 class MpManager:
     def __init__(self, session):

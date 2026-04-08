@@ -10,6 +10,7 @@ from interfaces.interface_graphique import GroupeBoutons, BoutonCustom, ListeEle
 class InterfaceAmis(QWidget):
     ami_remove = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
     ami_block = pyqtSignal(int)
+    start_conv = pyqtSignal(int)
 
     def __init__(self, amis:list[int], session):
         super().__init__()
@@ -44,10 +45,7 @@ class InterfaceAmis(QWidget):
 
         self.liste_amis = ListeElements()
         for ami_id in self.cache.amis_ids():
-            widget_ami = WidgetAmi(ami_id, self.cache, True)
-            widget_ami.ami_remove.connect(lambda id_: self.ami_remove.emit(id_))    # On renvoie un signal plus haut vers interface_messagerie
-            widget_ami.ami_block.connect(lambda id_: self.ami_block.emit(id_)) # la même
-            self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
+            self.ajouter_ami(ami_id)
         self.liste_amis.itemClicked.connect(self.ami_clique)
         self.layout.addWidget(self.liste_amis)
     
@@ -71,6 +69,7 @@ class InterfaceAmis(QWidget):
         widget_ami = WidgetAmi(ami_id, self.cache, True)
         widget_ami.ami_remove.connect(lambda id_: self.ami_remove.emit(id_))    # On renvoie un signal plus haut vers interface_messagerie
         widget_ami.ami_block.connect(lambda id_: self.ami_block.emit(id_))  # la même
+        widget_ami.start_conv.connect(lambda id_: self.start_conv.emit(id_))    # la même
         self.liste_amis.ajouter_item(data=ami_id, widget=widget_ami)
 
     def retirer_ami(self, ami_id:int):

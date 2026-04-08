@@ -111,6 +111,7 @@ class InterfaceMessagerie(QWidget):
         self.interface.addWidget(self.interface_amis)
         self.interface_amis.ami_remove.connect(self.remove_friend)
         self.interface_amis.ami_block.connect(self.block_friend)
+        self.interface_amis.start_conv.connect(lambda ami_id : self.contact_clique(ami_id=ami_id))
         self.interface.addWidget(self.interface_blocked)
         self.interface_blocked.ami_unblock.connect(self.unblock_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
@@ -201,8 +202,9 @@ class InterfaceMessagerie(QWidget):
             self.ligne_categorie.setCurrentWidget(self.categorie_demandes)
             self.changer_interface(self.interface_demandes_recues)
     
-    def contact_clique(self, item):
-        ami_id = item.data(Qt.ItemDataRole.UserRole)
+    def contact_clique(self, item=None, ami_id:int=None):
+        if item:
+            ami_id = item.data(Qt.ItemDataRole.UserRole)
         print(f"Ami id cliqué : {ami_id}")
         self.mp_manager.choisir_conv(ami_id)
 
