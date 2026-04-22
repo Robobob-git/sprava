@@ -9,14 +9,14 @@ from interfaces.interface_graphique import FenetrePrincipale, BoutonCustom
 from interfaces.interface_messagerie import InterfaceMessagerie
 from interfaces.interface_login import InterfaceLogin
 
-#docs : http://161.35.17.40:8000/docs#/
+#docs : https://sprava-api-fc44f5e02dd0.herokuapp.com/docs#/
 #proxy cmd : set HTTP_PROXY=http://192.168.228.254:3128&set HTTPS_PROXY=http://192.168.228.254:3128&git pull
 
 # Exécution de l'application
 def main():
-    import os
+    '''import os
     os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
 
     app = QApplication(sys.argv)
     app.setStyle("fusion")

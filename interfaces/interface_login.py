@@ -119,6 +119,7 @@ class InterfaceLogin(QWidget):
         def succes(rep):
             print("AAAAAAAAAAAAAAAAAA")
             if rep:
+                print(f'rep : {rep}')
                 self.token = rep.pop('api_token')
                 rep.pop('status_code')
                 self.user_info = rep
@@ -130,6 +131,10 @@ class InterfaceLogin(QWidget):
 
 
         if self.mail_widget_connexion.text() != "" and self.mdp_widget_connexion.text() != "":
+            if self.mail_widget_connexion.text() == "test" and self.mdp_widget_connexion.text() == "test":
+                self.connexion_confirmee_test()
+                return
+            
             mail=self.mail_widget_connexion.text()
             mdp=self.mdp_widget_connexion.text()
             self.requettes_manager.executer(func=lambda : self.gestionnaire_connexions.connexion(mail, mdp), func_succes=succes, func_erreur=erreur)
@@ -169,6 +174,14 @@ class InterfaceLogin(QWidget):
         print("Connecté avec succès")
         self.session = Session(user_info=self.user_info, token=self.token, requettes_manager=self.requettes_manager)
         interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
+        self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
+        self.fenetre_principale.changer_interface(interface_messagerie)
+
+    def connexion_confirmee_test(self):
+        print("MODE TEST")
+        user_info = {'user_id':999, 'username':'test', 'mail':'test@mail.com', 'phone':None, 'date_of_birth':'2000-01-01'}
+        self.session = Session(user_info=user_info, token="", requettes_manager="", test=True)
+        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session, test=True)
         self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
         self.fenetre_principale.changer_interface(interface_messagerie)
 

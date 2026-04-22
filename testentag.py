@@ -6,9 +6,9 @@ from autre_fonctions import obtenir_vrai_chemin
 
 
 def main():
-    import os
+    '''import os
     os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
 
     gestionnaire_connections = GestionConnexions()
 

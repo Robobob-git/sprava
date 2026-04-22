@@ -5,10 +5,11 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from interfaces.interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
-    def __init__(self, session):
+    def __init__(self, session, test:bool=False):
         super().__init__()
 
         self.session = session
+        self.test = test
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(20, 20, 20, 20)  # Marges autour du contenu
@@ -85,6 +86,9 @@ class InterfaceAjouterAmi(QWidget):
         self.layout.addStretch()
 
     def envoyer_demande(self):
+        if self.test:
+            return
+        
         def succes(rep):
             print('Demande envoyée avec succès')
             son_id = rep.get('receiver_id')

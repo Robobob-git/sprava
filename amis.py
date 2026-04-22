@@ -6,22 +6,6 @@ from cache import Cache
 from interfaces.interface_graphique import BoutonCustom, BoutonMenu
 from autre_fonctions import obtenir_vrai_chemin
 
-"""class Ami:
-    def __init__(self, ami_infos:dict):
-        self.username = ami_infos.get("username")
-        self.id = ami_infos.get("user_id")
-        self.mail = ami_infos.get("mail")
-        self.phone = ami_infos.get("phone")
-        self.date_of_birth = ami_infos.get("date_of_birth")
-        self.avatar_id = ami_infos.get("avatar_id")
-
-        '''self.status = "online"'''
-
-    def __eq__(self, autre):    # Permet de comparer deux instances Ami correctement
-        if isinstance(autre, Ami):
-            return self.id == autre.id
-        return False"""
-
 class WidgetBlocked(QWidget):
     ami_unblock = pyqtSignal(int)
 

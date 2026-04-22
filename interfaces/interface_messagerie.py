@@ -9,6 +9,7 @@ from interfaces.interface_amis import InterfaceAmis
 from interfaces.interface_blocked import InterfaceBlocked
 from interfaces.interface_ajouter_ami import InterfaceAjouterAmi
 from interfaces.interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
+from interfaces.interface_debug import InterfaceDebug
 from interfaces.interface_mp import MpManager
 
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
@@ -36,12 +37,14 @@ class WidgetExtraBouton(QWidget):
         layout.addStretch()
 
 class InterfaceMessagerie(QWidget):
-    def __init__(self, fenetre_principale:QMainWindow, session):
+    def __init__(self, fenetre_principale:QMainWindow, session, test:bool=False):
         super().__init__()
         self.fenetre_principale = fenetre_principale
         self.session = session
-        
-        self.requettes_manager = session.requettes_manager
+        self.test = test
+
+        if not self.test:
+            self.requettes_manager = session.requettes_manager
         self.cache = session.cache
 
         self.layout = QGridLayout()
@@ -54,20 +57,14 @@ class InterfaceMessagerie(QWidget):
         
         self._faire_ui()
 
+    def _connecter_signaux(self):
+        wsb = self.session.ws_bridge
+        wsb.new_message_received.connect(self.new_msg)
+
     def _faire_ui(self):
         self._faire_barre_laterale()
         self._faire_interfaces()
         self._faire_ligne_categorie()
-
-
-        
-        
-
-        #self.bouton1 = BoutonCustom(texte="1", layout_parent=self.layout, ligne=0, colonne=1, nouvelle_page=False)
-        #self.bouton2 = BoutonCustom(texte="2", layout_parent=self.layout, ligne=0, colonne=2, nouvelle_page=False)
-
-        #self.champ_de_texte = QLineEdit("Ecrire un message...")
-        #self.layout.addWidget(self.champ_de_texte, 0, 1)
 
     def _faire_barre_laterale(self):
         widget_barre_laterale = QWidget()
@@ -101,9 +98,9 @@ class InterfaceMessagerie(QWidget):
 
         self.interface_amis = InterfaceAmis(amis=self.liste_amis, session=self.session)
         self.interface_blocked = InterfaceBlocked(session = self.session)
-        self.interface_ajouter_amis = InterfaceAjouterAmi(session=self.session)
-        self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session)
-        self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session)
+        self.interface_ajouter_amis = InterfaceAjouterAmi(session=self.session, test=self.test)
+        self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session, test=self.test)
+        self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session, test=self.test)
 
         self.mp_manager = MpManager(session=self.session)
         self.interface_mp = self.mp_manager.widget_conv
@@ -115,14 +112,22 @@ class InterfaceMessagerie(QWidget):
         self.interface.addWidget(self.interface_blocked)
         self.interface_blocked.ami_unblock.connect(self.unblock_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
-
+        
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
         self.interface_demandes_recues.ami_accept.connect(self.new_friend)
 
         self.interface.addWidget(self.interface_mp)
+        self.mp_manager.envoi_msg.connect(lambda ami_id, msg : self.send_msg(ami_id, msg))
 
         self.interface.setCurrentWidget(self.interface_amis)
+
+        if self.test:
+            def recevoir_demande():
+                pass
+            self.interface_debug = InterfaceDebug()
+
+            self.interface.addWidget(self.interface_debug)
 
     def changer_interface(self, interface):
         if interface == self.interface:
@@ -212,13 +217,22 @@ class InterfaceMessagerie(QWidget):
 
 
     def new_friend(self, friend_id:int):
-        infos = self.session.gestionnaire_utilisateurs.obtenir_infos(id_=friend_id)
-        ami = Ami.depuis_dict(infos)
-        self.cache.upsert_ami(ami)
+        def succes(rep1):
+            def succes2(rep2):
+                conv_id = rep1.get('conversation_id')
+                ami = Ami.depuis_dict(rep2, conv_id)
+                self.cache.upsert_ami(ami)
 
-        self.liste_amis.append(friend_id)
-        self.interface_amis.ajouter_ami(friend_id)
-        self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.cache))
+                self.liste_amis.append(friend_id)
+                self.interface_amis.ajouter_ami(friend_id)
+                self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.cache))
+
+            self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_infos(friend_id), func_succes=succes2, func_erreur=erreur)
+        
+        def erreur(e):
+            print(f"Erreur serveur la création de conv ou d'obtention d'infos avec {friend_id} : {e}")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.creer_conv(friend_id), func_succes=succes, func_erreur=erreur)
 
     def remove_friend(self, friend_id:int, visuellement:bool=False):
         if not visuellement and friend_id not in self.liste_amis:
@@ -257,7 +271,6 @@ class InterfaceMessagerie(QWidget):
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
 
-
     def unblock_friend(self, friend_id:int):
         def succes(rep):
             self.cache.unblock(friend_id)
@@ -268,3 +281,18 @@ class InterfaceMessagerie(QWidget):
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.debloquer_ami(friend_id), func_succes=succes, func_erreur=erreur)
 
+    def send_msg(self, friend_id:int, msg:str):
+        def succes(rep):
+            msg_id = rep.get('message_id')  # id du message dans la conv
+            self.mp_manager.mps.get(friend_id).ajouter_message(auteur=self.session.user_info.get('username'), message=msg)
+
+        def erreur(e):
+            print(f"Erreur serveur lors de l'envoi d'un message à {friend_id} : {e}")
+
+        conv_id = self.cache.conv_id_par_ami_id(friend_id)
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.envoyer_msg(conv_id, msg), func_succes=succes, func_erreur=erreur)
+
+    def new_msg(self, friend_id:int, msg_infos:dict):
+        ami = self.cache.ami_par_id(friend_id)
+        self.cache.add_msg(id_=friend_id, conv_id=msg_infos.get("conv_id"), auteur_id=ami.username, msg=msg_infos.get("msg"), timestamp=msg_infos.get('heure'))
+        self.interface_mp.ajouter_message(auteur=ami.username, message=msg_infos.get('msg'), heure=msg_infos.get('heure'), pp_id=ami.pp_id)

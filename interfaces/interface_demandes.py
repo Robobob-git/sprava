@@ -14,17 +14,20 @@ class Demande:
 class InterfaceDemandesRecues(QWidget):
     ami_accept = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
 
-    def __init__(self, session):
+    def __init__(self, session, test):
         super().__init__()
 
         self.session = session
-        self.requettes_manager = session.requettes_manager
+        self.test = test
+        if not self.test:
+            self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         self.demandes:list[Demande] = []
-        self._trouver_demandes_recues()
+        if not self.test:
+            self._trouver_demandes_recues()
 
         self.ui = self._faire_ui()
 
@@ -62,6 +65,9 @@ class InterfaceDemandesRecues(QWidget):
         return widget_recues
 
     def accepter_demande(self, demande):
+        if self.test:
+            return
+        
         def succes(rep):
             self.demandes.remove(demande)
             self.ami_accept.emit(rep.get('new_friend_id'))
@@ -73,6 +79,9 @@ class InterfaceDemandesRecues(QWidget):
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=demande.nom, ami_id=demande.identifiant), func_succes=succes, func_erreur=erreur)
 
     def refuser_demande(self, demande):
+        if self.test:
+            return
+        
         def succes(rep):
             self.demandes.remove(demande)
             self.update_ui()
@@ -90,17 +99,21 @@ class InterfaceDemandesRecues(QWidget):
         self.ui = self._faire_ui()
 
 class InterfaceDemandesEnvoyees(QWidget):
-    def __init__(self, session):
+    def __init__(self, session, test):
         super().__init__()
 
         self.session = session
-        self.requettes_manager = session.requettes_manager
+        self.test = test
+
+        if not self.test:
+            self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         self.demandes = []
-        self._trouver_demandes_envoyees()
+        if not self.test:
+            self._trouver_demandes_envoyees()
 
         self.ui = self._faire_ui()
     
@@ -136,6 +149,9 @@ class InterfaceDemandesEnvoyees(QWidget):
         return widget_envoyees
     
     def annuler_demande(self, demande):
+        if self.test:
+            return
+        
         def succes(rep):
             self.demandes.remove(demande)
             self.update_ui()

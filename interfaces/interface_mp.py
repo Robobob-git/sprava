@@ -1,7 +1,7 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from interfaces.interface_graphique import BoutonCustom, TexteEtImage
 
@@ -18,8 +18,12 @@ class HeaderMP(QWidget):
         ami = cache.ami_par_id(ami_id)
         self.header = None
 
-class MpManager:
+class MpManager(QObject):
+    envoi_msg = pyqtSignal(int, str)
+
     def __init__(self, session):
+        super().__init__()
+
         self.session = session
 
         self.mps = {}
@@ -28,24 +32,35 @@ class MpManager:
     def choisir_conv(self, ami_id) -> None:
         if ami_id not in self.mps.keys():
             mp = InterfaceMP(ami_id, self.session)
+            mp.envoi_msg.connect(lambda ami_id, msg : self.envoi_msg.emit(ami_id, msg))
             self.mps[ami_id] = mp
             self.widget_conv.addWidget(mp)
         self.widget_conv.setCurrentWidget(self.mps[ami_id])
 
 class MessageWidget(QWidget):
-    def __init__(self, auteur:str, heure:str, message:str, avatar=None, montrer_header=True):
+    def __init__(self, auteur:str, message:str, heure:str = None, pp_id=None, montrer_header=True):
         super().__init__()
         self.auteur = auteur
-        self.heure = heure
         self.message = message
+        
+        self.heure = heure
+        if self.heure is None:
+            self.heure = str(datetime.now().strftime("%H:%M"))
+        else:
+            heure = datetime.strptime(self.heure, "%Y-%m-%d %H:%M:%S")
+            if datetime.now() - heure > timedelta(hours=24):
+                self.heure = str(heure.strftime("%Y-%m-%d %H:%M"))  # Affiche la date et l'heure si le msg est plus vieux d'un jour
+            else:
+                self.heure = str(heure.strftime("%H:%M"))   # Sinon affiche uniquement l'heure
+
         self.montrer_header = montrer_header
-        montrer_header=False
-        self.avatar = avatar
+        #self.montrer_header=False
+        self.pp_id = pp_id
         
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
         
-        self.init_ui()
+        self._faire_ui()
         self.setStyleSheet("""
             MessageWidget {
                 background-color: transparent;
@@ -60,9 +75,10 @@ class MessageWidget(QWidget):
         '''self.layout.setContentsMargins(10, 4, 10, 4)
         self.layout.setSpacing(10)'''
         if self.montrer_header:
-            self.layout.addWidget(self.avatar, alignment=Qt.AlignmentFlag.AlignTop)
+            self.layout.addSpacing(50)
+            #self.layout.addWidget(self.pp_id, alignment=Qt.AlignmentFlag.AlignTop)
         else:
-            # Espace pour aligner avec les messages qui ont un avatar
+            # Espace pour aligner avec les messages qui ont un pp_id
             self.layout.addSpacing(50)
 
         msg_layout = QVBoxLayout()
@@ -85,10 +101,10 @@ class MessageWidget(QWidget):
         msg_layout.addWidget(msg_label)
 
         self.layout.addLayout(msg_layout)
-        self.layout.addStrech()
+        self.layout.addStretch()
 
 class InterfaceMP(QWidget):
-    envoi_msg = pyqtSignal(str)
+    envoi_msg = pyqtSignal(int, str)
 
     def __init__(self, ami_id, session):
         super().__init__()
@@ -179,25 +195,22 @@ class InterfaceMP(QWidget):
         self.layout.addWidget(self.conv)
         self.layout.addWidget(self.ecrire_widget)
     
-    def ajouter_message(self, auteur:str, message:str, heure=None, avatar=None):
-        if heure is None:
-            heure = datetime.now()
-        pass
-
-        message_widget = MessageWidget(auteur, heure, message, avatar, montrer_header=True)
-
-        self.conv_layout.insertWidget(self.conv_layout.count() - 1, message_widget)
+    def ajouter_message(self, auteur:str, message:str, heure=None, pp_id=None):
+        message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
+        
+        self.conv_layout.addWidget(message_widget)
+        #self.conv_layout.insertWidget(self.conv_layout.count() - 1, message_widget)    # Le met avant, jsp pk c'est là
         self.messages.append(message_widget)
         
         self.scroll_en_bas()
 
     def scroll_en_bas(self):
-        scrollbar = self.scroll_area.verticalScrollBar()
+        scrollbar = self.zone_scroll.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
     def envoyer_message(self):
         texte = self.ecrire_msg.text().strip()
         if texte:
-            self.envoi_msg.emit(texte)
+            self.envoi_msg.emit(self.ami_id, texte)
 
 

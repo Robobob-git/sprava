@@ -5,25 +5,28 @@ from datetime import datetime, timedelta
 TTL_AMIS = timedelta(minutes=5)
 
 class Ami:
-    def __init__(self, id:int, username:str, avatar_id:int = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False):
+    def __init__(self, id:int, username:str, pp_id:int = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False, conv_id:int = None):
         self.id = id
         self.username = username
-        self.avatar_id = avatar_id
+        self.pp_id = pp_id
         self.mail = mail
         self.phone = phone
         self.date_of_birth = date_of_birth
         self.online = online
+        
+        self.conv_id = conv_id
 
     @staticmethod
-    def depuis_dict(d: dict):
-        """Construit un Ami depuis la réponse brute de l'API."""
+    def depuis_dict(d: dict, conv_id:int):
         return Ami(
             id=d.get("user_id"),
             username=d.get("username"),
-            avatar_id=d.get("avatar_id"),
+            pp_id=d.get("pp_id"),
             mail=d.get("mail"),
             phone=d.get("phone"),
-            date_of_birth=d.get("date_of_birth")
+            date_of_birth=d.get("date_of_birth"),
+
+            conv_id=conv_id
         )
 
     def __eq__(self, autre):
@@ -36,10 +39,10 @@ class Ami:
         return hash(self.id)
 
 class Blocked:
-    def __init__(self, id:int, username:str, avatar_id:int = None):
+    def __init__(self, id:int, username:str, pp_id:int = None):
         self.id = id
         self.username = username
-        self.avatar_id = avatar_id
+        self.pp_id = pp_id
 
 
 #  Cache SQLite + dict mémoire
@@ -66,16 +69,17 @@ class Cache:
             CREATE TABLE IF NOT EXISTS amis (
                 id INTEGER PRIMARY KEY,
                 username TEXT NOT NULL,
-                avatar_id TEXT,
+                pp_id TEXT,
                 mail TEXT,
                 phone TEXT,
-                date_of_birth TEXT
+                date_of_birth TEXT,
+                conv_id INTEGER
             );
                                  
             CREATE TABLE IF NOT EXISTS blocked (
                 id INTEGER PRIMARY KEY,
                 username TEXT NOT NULL,
-                avatar_id TEXT
+                pp_id TEXT
             );
 
             CREATE TABLE IF NOT EXISTS cache_meta (
@@ -84,15 +88,15 @@ class Cache:
             );
 
             CREATE TABLE IF NOT EXISTS messages (
-                id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                conversation_id INTEGER NOT NULL,
-                auteur_id       INTEGER NOT NULL,
-                contenu         TEXT    NOT NULL,
-                timestamp       TEXT    NOT NULL,
-                lu              INTEGER NOT NULL DEFAULT 0
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conv_id INTEGER NOT NULL,
+                auteur_id INTEGER NOT NULL,
+                contenu TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                lu INTEGER NOT NULL DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS idx_messages_conv
-                ON messages(conversation_id, timestamp);
+                ON messages(conv_id, timestamp);
         """)
         self._conn.commit()
 
@@ -140,6 +144,10 @@ class Cache:
     
     def is_blocked(self, id_:int) -> bool:
         return id_ in self._blocked
+    
+
+    def conv_id_par_ami_id(self, id_:int) -> int:
+        return self.ami_par_id(id_).conv_id
 
     # Écriture (SQLite + dict)
 
@@ -148,9 +156,9 @@ class Cache:
         with self._conn:
             self._conn.execute("DELETE FROM amis")
             self._conn.executemany(
-                """INSERT INTO amis (id, username, avatar_id, mail, phone, date_of_birth)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                [(a.id, a.username, a.avatar_id, a.mail, a.phone, a.date_of_birth) for a in amis]
+                """INSERT INTO amis (id, username, pp_id, mail, phone, date_of_birth, conv_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                [(a.id, a.username, a.pp_id, a.mail, a.phone, a.date_of_birth, a.conv_id) for a in amis]
             )
         self._set_meta("amis_sync_at", datetime.now().isoformat())
         # Mise à jour du dict (on préserve les statuts online déjà en mémoire)
@@ -164,9 +172,9 @@ class Cache:
         with self._conn:
             self._conn.execute(
                 """INSERT OR REPLACE INTO amis
-                   (id, username, avatar_id, mail, phone, date_of_birth)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (ami.id, ami.username, ami.avatar_id, ami.mail, ami.phone, ami.date_of_birth)
+                   (id, username, pp_id, mail, phone, date_of_birth, conv_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (ami.id, ami.username, ami.pp_id, ami.mail, ami.phone, ami.date_of_birth, ami.conv_id)
             )
         self._amis[ami.id] = ami
 
@@ -182,16 +190,23 @@ class Cache:
             print(f"Impossible de bloquer {id_} : ami introuvable dans le cache")
             return
 
-        # Créer un objet Blocked à partir de l'ami
-        blocked = Blocked(id=ami.id, username=ami.username, avatar_id=ami.avatar_id)
+        blocked = Blocked(id=ami.id, username=ami.username, pp_id=ami.pp_id)
         with self._conn:
-            self._conn.execute("INSERT OR IGNORE INTO blocked (id, username, avatar_id) VALUES (?, ?, ?)", (blocked.id, blocked.username, blocked.avatar_id))
+            self._conn.execute("INSERT OR IGNORE INTO blocked (id, username, pp_id) VALUES (?, ?, ?)", (blocked.id, blocked.username, blocked.pp_id))
         self._blocked[blocked.id] = blocked
 
     def unblock(self, id_:int):
         with self._conn:
-            self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
+            self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_))
         self._blocked.pop(id_, None)  
+
+    def add_msg(self, id_:int, conv_id:int, auteur_id:int, msg:str, timestamp:str):
+        with self._conn:
+            self._conn.execute("INSERT OR IGNORE INTO messages (id, conv_id, auteur_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, ?)", (id_, conv_id, auteur_id, msg, timestamp, 0))
+
+    def mettre_lu(self, conv_id:int):
+        with self._conn:
+            self._conn.execute("UPDATE messages SET lu = 1 WHERE conv_id = ?", (conv_id))
 
     def set_statut_ami(self, id_: int, online: bool):
         """Met à jour le statut online/offline"""
@@ -212,11 +227,11 @@ class Cache:
     # Lecture SQLite brute (usage interne uniquement)
 
     def _lire_amis_sqlite(self) -> list[Ami]:
-        rows = self._conn.execute("SELECT id, username, avatar_id, mail, phone, date_of_birth FROM amis").fetchall()
+        rows = self._conn.execute("SELECT id, username, pp_id, mail, phone, date_of_birth, conv_id FROM amis").fetchall()
         return [Ami(**dict(r)) for r in rows]
     
     def _lire_blocked_sqlite(self) -> dict[int, Blocked]:
-        rows = self._conn.execute("SELECT id, username, avatar_id FROM blocked").fetchall()
+        rows = self._conn.execute("SELECT id, username, pp_id FROM blocked").fetchall()
         for r in rows:
             print(f'r : {r["id"]}\ndict(r) : {dict(r)}')
         return {r["id"]: Blocked(**dict(r)) for r in rows}
