@@ -52,13 +52,19 @@ class InterfaceMessagerie(QWidget):
 
         '''self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)'''
-
-        self.liste_amis = self.cache.amis_ids()
         
+        if self.test:
+            self.liste_amis = self.cache.amis_ids()
+        else:
+            self.liste_amis = []
+            self.trouver_amis()
+            self.trouver_blocked()
+
         self._faire_ui()
 
     def _connecter_signaux(self):
         wsb = self.session.ws_bridge
+
         wsb.new_message_received.connect(self.new_msg)
 
     def _faire_ui(self):
@@ -234,11 +240,11 @@ class InterfaceMessagerie(QWidget):
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.creer_conv(friend_id), func_succes=succes, func_erreur=erreur)
 
-    def remove_friend(self, friend_id:int, visuellement:bool=False):
-        if not visuellement and friend_id not in self.liste_amis:
+    def remove_friend(self, friend_id:int, localement:bool=False):
+        if not localement and friend_id not in self.liste_amis:
             print(f"Impossible de retirer l'ami {friend_id} : introuvable dans self.liste_amis")
         else:
-            if visuellement:
+            if localement:
                 self.cache.invalider_ami(friend_id)
                 self.interface_amis.retirer_ami(friend_id)
                 self.liste_amis.remove(friend_id)
@@ -256,43 +262,99 @@ class InterfaceMessagerie(QWidget):
                 
                 self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.enlever_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
     
-    def block_friend(self, friend_id:int):
-        print(f"block_friend appelé avec {friend_id}")
-
-        def succes(rep):
+    def block_friend(self, friend_id:int, localement:bool=False):
+        if localement:
             print("succès")
             self.cache.block(friend_id)
             self.interface_blocked.new_blocked(friend_id)
             self.remove_friend(friend_id, True)
+        else:
+            def succes(rep):
+                print("succès")
+                self.cache.block(friend_id)
+                self.interface_blocked.new_blocked(friend_id)
+                self.remove_friend(friend_id, True)
 
-        def erreur(e):
-            print(f"Erreur serveur lors du bloquage de {friend_id} : {e}")
-            return
+            def erreur(e):
+                print(f"Erreur serveur lors du bloquage de {friend_id} : {e}")
+                return
 
-        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
+            self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.bloquer_ami(ami_id=friend_id), func_succes=succes, func_erreur=erreur)
 
-    def unblock_friend(self, friend_id:int):
-        def succes(rep):
+    def unblock_friend(self, friend_id:int, localement:bool=False):
+        if localement:
             self.cache.unblock(friend_id)
             self.interface_blocked.unblock(friend_id)
-        
-        def erreur(e):
-            print(f"Erreur serveur lors du débloquage de {friend_id} : {e}")
+        else:
+            def succes(rep):
+                self.cache.unblock(friend_id)
+                self.interface_blocked.unblock(friend_id)
+            
+            def erreur(e):
+                print(f"Erreur serveur lors du débloquage de {friend_id} : {e}")
 
-        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.debloquer_ami(friend_id), func_succes=succes, func_erreur=erreur)
+            self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.debloquer_ami(friend_id), func_succes=succes, func_erreur=erreur)
 
     def send_msg(self, friend_id:int, msg:str):
+        conv_id = self.cache.conv_id_par_ami_id(friend_id)
         def succes(rep):
             msg_id = rep.get('message_id')  # id du message dans la conv
-            self.mp_manager.mps.get(friend_id).ajouter_message(auteur=self.session.user_info.get('username'), message=msg)
+            self.cache.add_msg(id_=friend_id, conv_id=conv_id, auteur_id=self.session.user_info.get('username'), msg=msg)
 
+            self.mp_manager.mps.get(friend_id).ajouter_message(auteur=self.session.user_info.get('username'), message=msg)
         def erreur(e):
             print(f"Erreur serveur lors de l'envoi d'un message à {friend_id} : {e}")
 
-        conv_id = self.cache.conv_id_par_ami_id(friend_id)
+
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.envoyer_msg(conv_id, msg), func_succes=succes, func_erreur=erreur)
 
     def new_msg(self, friend_id:int, msg_infos:dict):
         ami = self.cache.ami_par_id(friend_id)
         self.cache.add_msg(id_=friend_id, conv_id=msg_infos.get("conv_id"), auteur_id=ami.username, msg=msg_infos.get("msg"), timestamp=msg_infos.get('heure'))
         self.interface_mp.ajouter_message(auteur=ami.username, message=msg_infos.get('msg'), heure=msg_infos.get('heure'), pp_id=ami.pp_id)
+
+    def trouver_amis(self) -> None:
+        def succes1(rep1):    # Ici rep renvoie direct la liste d'ids
+            amis_cache = self.cache.amis_ids()
+            if sorted(amis_cache) != sorted(rep1):
+                def succes2(rep2):  # Ici renvoie direct une liste de dicos
+                    for a in rep2:
+                        if a in amis_manquants:
+                            self.new_friend(a.get('user_id'))
+                        else:
+                            self.remove_friend(a.get('user_id'), True)
+
+                amis_manquants = [a for a in rep1 if a not in amis_cache]
+                amis_en_trop = [a for a in amis_cache if a not in rep1]
+                self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_infos_multiples(ids=amis_manquants+amis_en_trop), func_succes=succes2, func_erreur=erreur)
+
+
+            else:
+                self.liste_amis = amis_cache
+        def erreur(e):
+            print(f"Erreur serveur lors de l'accès à la liste d'amis ou leurs infos : {e}")
+            self.liste_amis = []
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.obtenir_amis(seulement_ids=True), func_succes=succes1, func_erreur=erreur)
+
+    def trouver_blocked(self) -> None:
+        def succes1(rep1):    # Ici rep renvoie direct la liste d'ids
+            blocked_cache = self.cache.blocked_ids()
+            if sorted(blocked_cache) != sorted(rep1):
+                def succes2(rep2):  # Ici renvoie direct une liste de dicos
+                    for a in rep2:
+                        if a in blocked_manquants:
+                            self.block_friend(a.get('user_id'), True)
+                        else:
+                            self.unblock_friend(a.get('user_id'), True)
+
+                blocked_manquants = [b for b in rep1 if b not in blocked_cache]
+                blocked_en_trop = [b for b in blocked_cache if b not in rep1]
+                self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_infos_multiples(ids=blocked_manquants+blocked_en_trop), func_succes=succes2, func_erreur=erreur)
+
+            else:
+                return
+        def erreur(e):
+            print(f"Erreur serveur lors de l'accès à la liste de blocked ou leurs infos : {e}")
+
+        self.requettes_manager.executer(func=self.session.gestionnaire_amis.obtenir_blocked_ids, func_succes=succes1, func_erreur=erreur)

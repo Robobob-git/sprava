@@ -200,7 +200,9 @@ class Cache:
             self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_))
         self._blocked.pop(id_, None)  
 
-    def add_msg(self, id_:int, conv_id:int, auteur_id:int, msg:str, timestamp:str):
+    def add_msg(self, id_:int, conv_id:int, auteur_id:int, msg:str, timestamp:str=None):
+        if timestamp is None:
+            timestamp = str(datetime.now())
         with self._conn:
             self._conn.execute("INSERT OR IGNORE INTO messages (id, conv_id, auteur_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, ?)", (id_, conv_id, auteur_id, msg, timestamp, 0))
 
