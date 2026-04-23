@@ -196,8 +196,9 @@ class Cache:
         self._blocked[blocked.id] = blocked
 
     def unblock(self, id_:int):
+        print(f"id_ : {id_}, et son type : {type(id_)}")
         with self._conn:
-            self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_))
+            self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
         self._blocked.pop(id_, None)  
 
     def add_msg(self, id_:int, conv_id:int, auteur_id:int, msg:str, timestamp:str=None):

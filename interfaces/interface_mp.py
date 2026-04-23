@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from interfaces.interface_graphique import BoutonCustom, TexteEtImage
 
@@ -37,6 +37,9 @@ class MpManager(QObject):
             self.widget_conv.addWidget(mp)
         self.widget_conv.setCurrentWidget(self.mps[ami_id])
 
+    def ajouter_msg(self, ami_id:int, auteur:str, message:str, heure=None, pp_id=None) -> None:
+        self.mps.get(ami_id).ajouter_msg(auteur, message, heure, pp_id)
+
 class MessageWidget(QWidget):
     def __init__(self, auteur:str, message:str, heure:str = None, pp_id=None, montrer_header=True):
         super().__init__()
@@ -47,8 +50,9 @@ class MessageWidget(QWidget):
         if self.heure is None:
             self.heure = str(datetime.now().strftime("%H:%M"))
         else:
-            heure = datetime.strptime(self.heure, "%Y-%m-%d %H:%M:%S")
-            if datetime.now() - heure > timedelta(hours=24):
+            heure = datetime.fromisoformat(self.heure)
+            heure = heure.replace(tzinfo=timezone.utc).astimezone()  # On adapte avec la timezone car le timestamp renvoyé par le serveur est en UTC sans marqueur de timezone
+            if datetime.now().astimezone() - heure >= timedelta(hours=24):  # converit aussi la date actuelle en format voulu pour la comparaison
                 self.heure = str(heure.strftime("%Y-%m-%d %H:%M"))  # Affiche la date et l'heure si le msg est plus vieux d'un jour
             else:
                 self.heure = str(heure.strftime("%H:%M"))   # Sinon affiche uniquement l'heure
@@ -195,7 +199,7 @@ class InterfaceMP(QWidget):
         self.layout.addWidget(self.conv)
         self.layout.addWidget(self.ecrire_widget)
     
-    def ajouter_message(self, auteur:str, message:str, heure=None, pp_id=None):
+    def ajouter_msg(self, auteur:str, message:str, heure=None, pp_id=None):
         message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
         
         self.conv_layout.addWidget(message_widget)

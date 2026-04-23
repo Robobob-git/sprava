@@ -38,7 +38,9 @@ class WSClient:
         @self.sio.on("new_message")
         def _(data):
             # Option: persister dans cache.messages
+            print('ETDRYGUHGJGCJHIOGJDHGUIHLGDHFFGKHGKFHDGKHLJHGFDHKJMKHGFJJKHJMHJFKJMGH')
             self.on_ui("new_message", data)
+            # data du type : {'conversation_id': 1, 'message_id': 74, 'sender_id': 2, 'content': 'hj', 'created_at': '2026-04-23T00:40:01.122822', 'media_ids': []}
 
         @self.sio.on("messages_read")
         def _(data):

@@ -1,10 +1,12 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 
 from interfaces.interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
+    nouv_demande = pyqtSignal(int, str)
+
     def __init__(self, session, test:bool=False):
         super().__init__()
 
@@ -89,14 +91,19 @@ class InterfaceAjouterAmi(QWidget):
         if self.test:
             return
         
-        def succes(rep):
-            print('Demande envoyée avec succès')
-            son_id = rep.get('receiver_id')
-            print(f'rep : {rep}')
+        def succes1(rep1):
+            if rep1.get('status_code') == 200:
+                def succes2(rep2):  # Ici on a direct le nom en str
+                    self.nouv_demande.emit(son_id, rep2)
 
+                son_id = rep1.get('receiver_id')
+                print(f'BLOQUES : {self.session.cache.blocked_ids()}')
+                if self.session.cache.is_blocked(son_id):
+                    erreur()
+                self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_nom(son_id), func_succes=succes2, func_erreur=erreur)
         def erreur(e):
             print("Erreur lors de l'envoi de la demande")
 
         nom = self.recherche_qqn.text()
-        self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom), func_succes=succes, func_erreur=erreur)
+        self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom), func_succes=succes1, func_erreur=erreur)
 

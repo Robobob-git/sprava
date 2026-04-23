@@ -52,14 +52,14 @@ class InterfaceMessagerie(QWidget):
 
         '''self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)'''
-        
-        if self.test:
-            self.liste_amis = self.cache.amis_ids()
-        else:
-            self.liste_amis = []
+
+        self.liste_amis = self.cache.amis_ids()
+        if not self.test:
             self.trouver_amis()
             self.trouver_blocked()
 
+
+        self._connecter_signaux()
         self._faire_ui()
 
     def _connecter_signaux(self):
@@ -118,6 +118,7 @@ class InterfaceMessagerie(QWidget):
         self.interface.addWidget(self.interface_blocked)
         self.interface_blocked.ami_unblock.connect(self.unblock_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
+        self.interface_ajouter_amis.nouv_demande.connect(lambda ami_id, ami_nom: self.interface_demandes_envoyees.ajouter_demande(ami_id=ami_id, ami_nom=ami_nom))
         
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
@@ -241,20 +242,20 @@ class InterfaceMessagerie(QWidget):
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.creer_conv(friend_id), func_succes=succes, func_erreur=erreur)
 
     def remove_friend(self, friend_id:int, localement:bool=False):
-        if not localement and friend_id not in self.liste_amis:
+        if friend_id not in self.liste_amis:
             print(f"Impossible de retirer l'ami {friend_id} : introuvable dans self.liste_amis")
         else:
             if localement:
                 self.cache.invalider_ami(friend_id)
                 self.interface_amis.retirer_ami(friend_id)
-                self.liste_amis.remove(friend_id)
                 self.widget_colonne_contacts.retirer_item(data=friend_id)
+                self.liste_amis.remove(friend_id)
             else:
                 def succes(rep):
                     self.cache.invalider_ami(friend_id)
                     self.interface_amis.retirer_ami(friend_id)
-                    self.liste_amis.remove(friend_id)
                     self.widget_colonne_contacts.retirer_item(data=friend_id)
+                    self.liste_amis.remove(friend_id)
 
                 def erreur(e):
                     print(f"Erreur serveur lors de la suppression de {friend_id} : {e}")
@@ -301,17 +302,21 @@ class InterfaceMessagerie(QWidget):
             msg_id = rep.get('message_id')  # id du message dans la conv
             self.cache.add_msg(id_=friend_id, conv_id=conv_id, auteur_id=self.session.user_info.get('username'), msg=msg)
 
-            self.mp_manager.mps.get(friend_id).ajouter_message(auteur=self.session.user_info.get('username'), message=msg)
+            self.mp_manager.ajouter_msg(ami_id=friend_id, auteur=self.session.user_info.get('username'), message=msg)
         def erreur(e):
             print(f"Erreur serveur lors de l'envoi d'un message à {friend_id} : {e}")
 
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.envoyer_msg(conv_id, msg), func_succes=succes, func_erreur=erreur)
 
-    def new_msg(self, friend_id:int, msg_infos:dict):
-        ami = self.cache.ami_par_id(friend_id)
-        self.cache.add_msg(id_=friend_id, conv_id=msg_infos.get("conv_id"), auteur_id=ami.username, msg=msg_infos.get("msg"), timestamp=msg_infos.get('heure'))
-        self.interface_mp.ajouter_message(auteur=ami.username, message=msg_infos.get('msg'), heure=msg_infos.get('heure'), pp_id=ami.pp_id)
+    def new_msg(self, msg_infos:dict):
+        print(f'LAAAAAAAAAAA : {msg_infos}')
+        if msg_infos.get('sender_id') == self.session.user_id:  # Si le message perçu est en fait un message que l'on a nous même envoyé, on ne fait rien
+            return
+        
+        ami = self.cache.ami_par_id(msg_infos.get("sender_id"))
+        self.cache.add_msg(id_=ami.id, conv_id=msg_infos.get("conversation_id"), auteur_id=ami.id, msg=msg_infos.get("content"), timestamp=msg_infos.get('created_at'))
+        self.mp_manager.ajouter_msg(ami_id=ami.id, auteur=ami.username, message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id)
 
     def trouver_amis(self) -> None:
         def succes1(rep1):    # Ici rep renvoie direct la liste d'ids
@@ -319,10 +324,13 @@ class InterfaceMessagerie(QWidget):
             if sorted(amis_cache) != sorted(rep1):
                 def succes2(rep2):  # Ici renvoie direct une liste de dicos
                     for a in rep2:
-                        if a in amis_manquants:
-                            self.new_friend(a.get('user_id'))
+                        uid = a.get('user_id')
+                        if uid in amis_manquants:
+                            self.new_friend(uid)
+                        elif uid in amis_en_trop:
+                            self.remove_friend(uid, True)
                         else:
-                            self.remove_friend(a.get('user_id'), True)
+                            print(f"uid amis impossible : {uid}")
 
                 amis_manquants = [a for a in rep1 if a not in amis_cache]
                 amis_en_trop = [a for a in amis_cache if a not in rep1]
@@ -343,10 +351,13 @@ class InterfaceMessagerie(QWidget):
             if sorted(blocked_cache) != sorted(rep1):
                 def succes2(rep2):  # Ici renvoie direct une liste de dicos
                     for a in rep2:
-                        if a in blocked_manquants:
-                            self.block_friend(a.get('user_id'), True)
+                        uid = a.get('user_id')
+                        if uid in blocked_manquants:
+                            self.block_friend(uid, True)
+                        elif uid in blocked_en_trop:
+                            self.unblock_friend(uid, True)
                         else:
-                            self.unblock_friend(a.get('user_id'), True)
+                            print(f"uid blocked impossible : {uid}")
 
                 blocked_manquants = [b for b in rep1 if b not in blocked_cache]
                 blocked_en_trop = [b for b in blocked_cache if b not in rep1]
