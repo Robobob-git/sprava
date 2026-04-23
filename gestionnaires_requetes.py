@@ -45,7 +45,7 @@ class GestionUtilisateurs:
 
         self.gestionnaire_de_requetes = GestionRequetes(token=self.token)
     
-    def obtenir_id(self, nom:str):
+    def obtenir_id(self, nom:str) -> int:
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/user/username?username={nom}", type_de_r='get')
         return rep.get("user_id")
 

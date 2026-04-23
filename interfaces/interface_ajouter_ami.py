@@ -91,19 +91,22 @@ class InterfaceAjouterAmi(QWidget):
         if self.test:
             return
         
-        def succes1(rep1):
-            if rep1.get('status_code') == 200:
-                def succes2(rep2):  # Ici on a direct le nom en str
-                    self.nouv_demande.emit(son_id, rep2)
+        def succes1(id_):  # Ici on a direct l'id en int
+            if not id_:
+                return
+            if self.session.cache.is_blocked(id_):
+                erreur(f"{id_} est bloqué")
+                return
 
-                son_id = rep1.get('receiver_id')
-                print(f'BLOQUES : {self.session.cache.blocked_ids()}')
-                if self.session.cache.is_blocked(son_id):
-                    erreur()
-                self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_nom(son_id), func_succes=succes2, func_erreur=erreur)
+            def succes2(rep2):
+                if rep2.get("status_code") == 200:
+                    self.nouv_demande.emit(id_, nom)
+
+            self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(ami_id=id_), func_succes=succes2, func_erreur=erreur)
         def erreur(e):
-            print("Erreur lors de l'envoi de la demande")
+            print(f"Erreur lors de l'envoi de la demande : {e}")
+            return
 
         nom = self.recherche_qqn.text()
-        self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(nom_ami=nom), func_succes=succes1, func_erreur=erreur)
+        self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_id(nom), func_succes=succes1, func_erreur=erreur)
 
