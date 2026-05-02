@@ -38,7 +38,7 @@ class WSClient:
         @self.sio.on("new_message")
         def _(data):
             # Option: persister dans cache.messages
-            print('ETDRYGUHGJGCJHIOGJDHGUIHLGDHFFGKHGKFHDGKHLJHGFDHKJMKHGFJJKHJMHJFKJMGH')
+            print('UN MESSAGE RECU')
             self.on_ui("new_message", data)
             # data du type : {'conversation_id': 1, 'message_id': 74, 'sender_id': 2, 'content': 'hj', 'created_at': '2026-04-23T00:40:01.122822', 'media_ids': []}
 
@@ -48,22 +48,27 @@ class WSClient:
 
         @self.sio.on("new_friend_request")
         def _(data):
+            print("NOUVELLE DEMANDE RECUE")
             self.on_ui("new_friend_request", data)
 
         @self.sio.on("friend_request_accepted")
         def _(data):
+            print("UNE DEMANDE A ÉTÉ ACCEPTÉE")
             self.on_ui("friend_request_accepted", data)
 
         @self.sio.on("friend_request_rejected")
         def _(data):
+            print("UNE DEMANDE A ÉTÉ REFUSÉE")
             self.on_ui("friend_request_rejected", data)
 
         @self.sio.on("friend_request_canceled")
         def _(data):
+            print("QUELQU'UN A ANNULÉ UNE DEMANDE ENVERS MOI")
             self.on_ui("friend_request_canceled", data)
 
         @self.sio.on("friend_removed")
         def _(data):
+            print("FRIEND REMOVED ME")
             self.on_ui("friend_removed", data)
 
         @self.sio.on("user_updated")

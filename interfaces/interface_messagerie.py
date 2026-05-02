@@ -59,8 +59,8 @@ class InterfaceMessagerie(QWidget):
             self.trouver_blocked()
 
 
-        self._connecter_signaux()
         self._faire_ui()
+        self._connecter_signaux()
 
     def _connecter_signaux(self):
         wsb = self.session.ws_bridge
@@ -68,7 +68,7 @@ class InterfaceMessagerie(QWidget):
 
         wsb.new_message_received.connect(self.new_msg)
 
-        wsb.new_friend_request.connext(lambda id_, pseudo: self.interface_demandes_recues.ajouter_demande(id_, pseudo))
+        wsb.new_friend_request.connect(lambda id_, pseudo: self.interface_demandes_recues.ajouter_demande(id_, pseudo))
         wsb.friend_request_accepted.connect(self.new_friend)
         wsb.friend_request_rejected.connect(self.interface_demandes_envoyees.retirer_demande)
         wsb.friend_request_canceled.connect(self.interface_demandes_envoyees.retirer_demande)
