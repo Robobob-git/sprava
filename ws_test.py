@@ -46,6 +46,34 @@ class WSClient:
         def _(data):
             self.on_ui("messages_read", data)
 
+        @self.sio.on("new_friend_request")
+        def _(data):
+            self.on_ui("new_friend_request", data)
+
+        @self.sio.on("friend_request_accepted")
+        def _(data):
+            self.on_ui("friend_request_accepted", data)
+
+        @self.sio.on("friend_request_rejected")
+        def _(data):
+            self.on_ui("friend_request_rejected", data)
+
+        @self.sio.on("friend_request_canceled")
+        def _(data):
+            self.on_ui("friend_request_canceled", data)
+
+        @self.sio.on("friend_removed")
+        def _(data):
+            self.on_ui("friend_removed", data)
+
+        @self.sio.on("user_updated")
+        def _(data):
+            self.on_ui("user_updated", data)
+
+        @self.sio.on("user_blocked")
+        def _(data):
+            self.on_ui("user_blocked", data)
+
     def connect(self, timeout=10):
         self.sio.connect(self.url, auth={"token": self.token}, wait_timeout=timeout)
         if not self._connected.wait(timeout):

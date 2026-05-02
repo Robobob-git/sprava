@@ -17,7 +17,14 @@ class WSBridge(QObject):
     online_friends_received = pyqtSignal(list)
     new_message_received = pyqtSignal(dict)
     messages_read_received = pyqtSignal(dict)
-    raw_event_received = pyqtSignal(str, dict)
+
+    new_friend_request = pyqtSignal(int, str)
+    friend_request_accepted = pyqtSignal(int, str)
+    friend_request_rejected = pyqtSignal(int, str)
+    friend_request_canceled = pyqtSignal(int)
+    friend_removed = pyqtSignal(int, str)
+    user_updated = pyqtSignal(int, str, str)    # data de type : {"user_id": 1, "username": "alice_new", "avatar_id": "abc-123.png"}
+
     error_occurred = pyqtSignal(str)
 
     def __init__(self, session, parent=None) -> None:
@@ -85,25 +92,43 @@ class WSBridge(QObject):
         self._client.mark_read(conversation_id=conversation_id)
 
     def _on_ws_event(self, event_name: str, data) -> None:
-        payload = data if isinstance(data, dict) else {"data": data}
-        self.raw_event_received.emit(event_name, payload)
-
         if event_name == "friend_status_change":
-            user_id = int(payload.get("user_id", -1))
-            online = payload.get("status") == "online"
-            self.friend_status_changed.emit(user_id, online, payload)
+            user_id = int(data.get("user_id", -1))
+            online = data.get("status") == "online"
+            self.friend_status_changed.emit(user_id, online, data)
             return
 
         if event_name == "online_friends":
-            friends = payload.get("friends", [])
+            friends = data.get("friends", [])
             if not isinstance(friends, list):
                 friends = []
             self.online_friends_received.emit(friends)
             return
 
         if event_name == "new_message":
-            self.new_message_received.emit(payload)
+            self.new_message_received.emit(data)
             return
 
         if event_name == "messages_read":
-            self.messages_read_received.emit(payload)
+            self.messages_read_received.emit(data)
+
+        if event_name == "new_friend_request":
+            self.new_friend_request.emit(data.get('sender_id'), data.get('sender_username'))
+
+        if event_name == "friend_request_accepted":
+            self.friend_request_accepted.emit(data.get('friend_id'), data.get('friend_username'))
+
+        if event_name == "friend_request_rejected":
+            self.friend_request_rejected.emit(data.get('user_id'), data.get('username'))
+
+        if event_name == "friend_request_canceled":
+            self.friend_request_canceled.emit(data.get('seder_id'))
+
+
+        if event_name == "friend_removed":
+            self.friend_removed.emit(data.get('user_id'), data.get('username'))
+
+        if event_name == "user_updated":
+            self.user_updated.emit(data.get('user_id'), data.get('username'), data.get('avatar_id'))
+
+        

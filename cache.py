@@ -102,7 +102,7 @@ class Cache:
 
     # TTL
 
-    def _get_meta(self, cle: str) -> str | None:
+    def _get_meta(self, cle: str):
         row = self._conn.execute("SELECT valeur FROM cache_meta WHERE cle = ?", (cle,)).fetchone()
         return row["valeur"] if row else None
 
