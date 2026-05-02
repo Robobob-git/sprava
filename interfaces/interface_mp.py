@@ -29,15 +29,29 @@ class MpManager(QObject):
         self.mps = {}
         self.widget_conv = QStackedWidget()
 
-    def choisir_conv(self, ami_id) -> None:
+
+    def ajouter_conv(self, ami_id:int):
+        mp = InterfaceMP(ami_id, self.session)
+        mp.envoi_msg.connect(lambda ami_id, msg : self.envoi_msg.emit(ami_id, msg))
+        self.mps[ami_id] = mp
+        self.widget_conv.addWidget(mp)
+
+    def supprimer_conv(self, ami_id:int):
         if ami_id not in self.mps.keys():
-            mp = InterfaceMP(ami_id, self.session)
-            mp.envoi_msg.connect(lambda ami_id, msg : self.envoi_msg.emit(ami_id, msg))
-            self.mps[ami_id] = mp
-            self.widget_conv.addWidget(mp)
+            print(f"Il n'y a pas de conv avec l'ami d'id : {ami_id}")
+            return
+        
+        widget = self.mps[ami_id]
+        self.widget_conv.removeWidget(widget)
+        widget.deleteLater()
+        del self.mps[ami_id]
+
+    def choisir_conv(self, ami_id:int):
+        if ami_id not in self.mps.keys():
+            self.ajouter_conv(ami_id)
         self.widget_conv.setCurrentWidget(self.mps[ami_id])
 
-    def ajouter_msg(self, ami_id:int, auteur:str, message:str, heure=None, pp_id=None) -> None:
+    def ajouter_msg(self, ami_id:int, auteur:str, message:str, heure=None, pp_id=None):
         self.mps.get(ami_id).ajouter_msg(auteur, message, heure, pp_id)
 
 class MessageWidget(QWidget):

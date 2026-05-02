@@ -165,10 +165,10 @@ class Cache:
         for a in amis:
             if a.id in self._amis:
                 a.online = self._amis[a.id].online
-        self._amis = {a.id:a for a in amis}
+        self._amis = {a.id : a for a in amis}
 
     def upsert_ami(self, ami: Ami):
-        """Ajoute ou met à jour un ami (ex: friend_request_accepted)."""
+        """Ajoute ou met à jour un ami"""
         with self._conn:
             self._conn.execute(
                 """INSERT OR REPLACE INTO amis

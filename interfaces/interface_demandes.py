@@ -75,10 +75,7 @@ class InterfaceDemandesRecues(QWidget):
         
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.refuser_demande_ami(ami_id=ami_id), func_succes=succes, func_erreur=erreur)
 
-    def ajouter_demande(self, ami_id:int, ami_nom:str=None):
-        if not ami_nom:
-            ami_nom = self.session.cache.ami_par_id(ami_id).username
-
+    def ajouter_demande(self, ami_id:int, ami_nom:str):
         w = QWidget()
         l = QHBoxLayout()
         w.setLayout(l)

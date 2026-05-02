@@ -65,7 +65,15 @@ class InterfaceMessagerie(QWidget):
     def _connecter_signaux(self):
         wsb = self.session.ws_bridge
 
+
         wsb.new_message_received.connect(self.new_msg)
+
+        wsb.new_friend_request.connext(lambda id_, pseudo: self.interface_demandes_recues.ajouter_demande(id_, pseudo))
+        wsb.friend_request_accepted.connect(self.new_friend)
+        wsb.friend_request_rejected.connect(self.interface_demandes_envoyees.retirer_demande)
+        wsb.friend_request_canceled.connect(self.interface_demandes_envoyees.retirer_demande)
+
+        wsb.friend_removed.connect(lambda id_: self.remove_friend(id_, True))
 
     def _faire_ui(self):
         self._faire_barre_laterale()
@@ -309,6 +317,7 @@ class InterfaceMessagerie(QWidget):
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.envoyer_msg(conv_id, msg), func_succes=succes, func_erreur=erreur)
 
+
     def new_msg(self, msg_infos:dict):
         print(f'LAAAAAAAAAAA : {msg_infos}')
         if msg_infos.get('sender_id') == self.session.user_id:  # Si le message perçu est en fait un message que l'on a nous même envoyé, on ne fait rien
@@ -317,6 +326,25 @@ class InterfaceMessagerie(QWidget):
         ami = self.cache.ami_par_id(msg_infos.get("sender_id"))
         self.cache.add_msg(id_=ami.id, conv_id=msg_infos.get("conversation_id"), auteur_id=ami.id, msg=msg_infos.get("content"), timestamp=msg_infos.get('created_at'))
         self.mp_manager.ajouter_msg(ami_id=ami.id, auteur=ami.username, message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id)
+
+    def friend_update(self, friend_id:int, new_pseudo:str, new_pp:str):
+        old_ami = self.cache.ami_par_id(friend_id)
+        new_ami = self.cache.Ami(id=friend_id, username=new_pseudo, pp_id=new_pp, mail=old_ami.mail, phone=old_ami.phone, date_of_birth=old_ami.date_of_birth, online=old_ami.online, conv_id=old_ami.conv_id)
+        
+        if old_ami.username != new_pseudo or old_ami.pp != new_pp:
+            self.cache.upsert_ami(new_ami)
+            
+            self.interface_amis.retirer_ami(friend_id)
+            self.interface_amis.ajouter_ami(friend_id)
+
+            self.widget_colonne_contacts.retirer_item(friend_id)
+            self.widget_colonne_contacts.ajouter_item(friend_id, WidgetAmi(friend_id, self.cache))
+
+            self.mp_manager.supprimer_conv(friend_id)
+            self.mp_manager.ajouter_conv(friend_id)
+
+
+
 
     def trouver_amis(self) -> None:
         def succes1(rep1):    # Ici rep renvoie direct la liste d'ids

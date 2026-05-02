@@ -19,11 +19,14 @@ class WSBridge(QObject):
     messages_read_received = pyqtSignal(dict)
 
     new_friend_request = pyqtSignal(int, str)
-    friend_request_accepted = pyqtSignal(int, str)
-    friend_request_rejected = pyqtSignal(int, str)
+    friend_request_accepted = pyqtSignal(int)
+    friend_request_rejected = pyqtSignal(int)
     friend_request_canceled = pyqtSignal(int)
-    friend_removed = pyqtSignal(int, str)
-    user_updated = pyqtSignal(int, str, str)    # data de type : {"user_id": 1, "username": "alice_new", "avatar_id": "abc-123.png"}
+
+    friend_removed = pyqtSignal(int)
+    user_updated = pyqtSignal(int, str, str)    # (user_id, username, avatar_id)
+    user_blocked = pyqtSignal(int)
+    user_unblocked = pyqtSignal(int)
 
     error_occurred = pyqtSignal(str)
 
@@ -112,23 +115,39 @@ class WSBridge(QObject):
         if event_name == "messages_read":
             self.messages_read_received.emit(data)
 
+
         if event_name == "new_friend_request":
             self.new_friend_request.emit(data.get('sender_id'), data.get('sender_username'))
+            # data exemple : {"sender_id": 1, "sender_username": "alice"}
 
         if event_name == "friend_request_accepted":
-            self.friend_request_accepted.emit(data.get('friend_id'), data.get('friend_username'))
+            self.friend_request_accepted.emit(data.get('friend_id'))
+            # data exemple : {"friend_id": 2, "friend_username": "bob"}
 
         if event_name == "friend_request_rejected":
-            self.friend_request_rejected.emit(data.get('user_id'), data.get('username'))
+            self.friend_request_rejected.emit(data.get('user_id'))
+            # data exemple : {"user_id": 2, "username": "bob"}
 
         if event_name == "friend_request_canceled":
-            self.friend_request_canceled.emit(data.get('seder_id'))
+            self.friend_request_canceled.emit(data.get('sender_id'))
+            # data exemple : {"sender_id": 1}
 
 
         if event_name == "friend_removed":
-            self.friend_removed.emit(data.get('user_id'), data.get('username'))
+            self.friend_removed.emit(data.get('user_id'))
+            # data exemple : {"user_id": 1, "username": "alice"}
 
         if event_name == "user_updated":
             self.user_updated.emit(data.get('user_id'), data.get('username'), data.get('avatar_id'))
+            # data exemple : {"user_id": 1, "username": "alice_new", "avatar_id": "abc-123.png"}
+
+        if event_name == "user_blocked":
+            self.user_blocked.emit(data.get('user_id'))
+            # data exemple : {"user_id": 1}
+        
+        if event_name == "user_unblocked":
+            self.user_unblocked.emit(data.get('user_id'))
+            # data exemple : {"user_id": 1}
+
 
         
