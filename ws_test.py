@@ -7,7 +7,7 @@ class WSClient:
         self.token = token
         self.session = session          # accès cache + managers
         self.on_ui = on_ui              # callback thread-safe vers Qt
-        self.sio = socketio.Client(reconnection=True)
+        self.sio = socketio.Client(reconnection=True, logger=True, engineio_logger=True)
         self._connected = threading.Event()
         self._register_handlers()
 
@@ -19,7 +19,32 @@ class WSClient:
 
         @self.sio.on("disconnect")
         def _():
+            print("DECONNEXION")
             self._connected.clear()
+
+
+
+        @self.sio.on("connect_error")
+        def _(data):
+            print(f"WS CONNECT_ERROR: {data}")
+
+        @self.sio.on("reconnect_attempt")
+        def _(attempt):
+            print(f"WS RECONNECT_ATTEMPT: {attempt}")
+
+        @self.sio.on("reconnect")
+        def _(attempt):
+            print(f"WS RECONNECTED: {attempt}")
+
+        @self.sio.on("reconnect_error")
+        def _(data):
+            print(f"WS RECONNECT_ERROR: {data}")
+
+        @self.sio.on("reconnect_failed")
+        def _():
+            print("WS RECONNECT_FAILED")    
+
+
 
         @self.sio.on("friend_status_change")
         def _(data):
@@ -73,11 +98,18 @@ class WSClient:
 
         @self.sio.on("user_updated")
         def _(data):
+            print("USER UPDATED")
             self.on_ui("user_updated", data)
 
         @self.sio.on("user_blocked")
         def _(data):
+            print("USER BLOCKED ME")
             self.on_ui("user_blocked", data)
+
+        @self.sio.on("user_unblocked")
+        def _(data):
+            print("USER UNBLOCKED ME")
+            self.on_ui("user_unblocked", data)
 
     def connect(self, timeout=10):
         self.sio.connect(self.url, auth={"token": self.token}, wait_timeout=timeout)

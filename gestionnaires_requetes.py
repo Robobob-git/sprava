@@ -224,7 +224,7 @@ class GestionConversations:
         return rep
     
     def obtenir_msgs(self, conv_id:int, limite:int=50, offset:int=0):
-        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/messages?conversation_id={conv_id}", type_de_r='get')
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/conversation/messages?conversation_id={conv_id}&limit={limite}&offset={offset}", type_de_r='get')
         return rep
     
     def envoyer_msg(self, conv_id:int, msg:str):
