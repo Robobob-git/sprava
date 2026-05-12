@@ -40,8 +40,16 @@ class WSBridge(QObject):
     def start(self, token: str, timeout: int = 10) -> None:
         """Initialize and connect websocket in a background thread."""
         with self._lock:
-            if self._thread and self._thread.is_alive():
+            if self._client is not None and self._client.sio.connected:  #Si client déjà connecté
                 return
+            
+            if self._client is not None:    #Si client existant mais pas connecté
+                try:
+                    self._client.disconnect()
+                except Exception:
+                    pass
+                self._client = None
+                self._thread = None
 
             self._client = WSClient(token=token, session=self.session, on_ui=self._on_ws_event)
             self._thread = threading.Thread(
@@ -114,40 +122,49 @@ class WSBridge(QObject):
 
         if event_name == "messages_read":
             self.messages_read_received.emit(data)
+            return
 
 
         if event_name == "new_friend_request":
             self.new_friend_request.emit(data.get('sender_id'), data.get('sender_username'))
             # data exemple : {"sender_id": 1, "sender_username": "alice"}
+            return
 
         if event_name == "friend_request_accepted":
             self.friend_request_accepted.emit(data.get('friend_id'))
             # data exemple : {"friend_id": 2, "friend_username": "bob"}
+            return
 
         if event_name == "friend_request_rejected":
             self.friend_request_rejected.emit(data.get('user_id'))
             # data exemple : {"user_id": 2, "username": "bob"}
-
+            return
+        
         if event_name == "friend_request_canceled":
             self.friend_request_canceled.emit(data.get('sender_id'))
             # data exemple : {"sender_id": 1}
+            return
 
 
         if event_name == "friend_removed":
             self.friend_removed.emit(data.get('user_id'))
             # data exemple : {"user_id": 1, "username": "alice"}
+            return
 
         if event_name == "user_updated":
             self.user_updated.emit(data.get('user_id'), data.get('username'), data.get('avatar_id'))
             # data exemple : {"user_id": 1, "username": "alice_new", "avatar_id": "abc-123.png"}
+            return
 
         if event_name == "user_blocked":
             self.user_blocked.emit(data.get('user_id'))
             # data exemple : {"user_id": 1}
+            return
         
         if event_name == "user_unblocked":
             self.user_unblocked.emit(data.get('user_id'))
             # data exemple : {"user_id": 1}
+            return
 
 
         

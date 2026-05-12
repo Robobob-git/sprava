@@ -14,9 +14,25 @@ from interfaces.interface_login import InterfaceLogin
 
 # Exécution de l'application
 def main():
-    import os
+    '''import os
     os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
+    import os
+
+    def print_proxy_env():
+        keys = [
+            "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+            "http_proxy", "https_proxy", "no_proxy",
+        ]
+        print("== Proxy env ==")
+        for k in keys:
+            v = os.environ.get(k)
+            if v:
+                print(f"{k}={v}")
+            else:
+                print(f"{k} is not set")
+    
+    print_proxy_env()
 
     app = QApplication(sys.argv)
     app.setStyle("fusion")
