@@ -85,7 +85,7 @@ class WidgetAmi(QWidget):
             self.action_retirer = QAction("Retirer l'ami", self)
             self.action_retirer.triggered.connect(lambda: self.ami_remove.emit(self.ami_id))
             self.action_bloquer = QAction("Bloquer l'ami", self)
-            self.action_bloquer.triggered.connect(lambda: (print(f"Action bloquer déclenchée pour {self.ami_id}"), self.ami_block.emit(self.ami_id)))
+            self.action_bloquer.triggered.connect(lambda: self.ami_block.emit(self.ami_id))
             self.menu = QMenu(self)
             self.menu.addAction(self.action_retirer)
             self.menu.addAction(self.action_bloquer)
@@ -113,7 +113,6 @@ class WidgetAmi(QWidget):
                     margin: 4px 10px;
                 }
             """)
-            '''self.bouton_menu = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"), custom_command=self.afficher_menu)'''
             self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
 
 

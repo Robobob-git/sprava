@@ -1,6 +1,6 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
+from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QRect, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QRegion
 
 from autre_fonctions import obtenir_vrai_chemin
 
@@ -78,12 +78,34 @@ class InterfaceMessagerie(QWidget):
         wsb.friend_removed.connect(lambda id_: self.remove_friend(id_, True))
 
     def _faire_ui(self):
+        self._faire_header_compte()
         self._faire_interfaces()
         self._faire_ligne_categorie()
     
+    def _faire_header_compte(self):
+        self.header_compte = QWidget()
+        layout = QHBoxLayout(self.header_compte)
+
+        user_pp = QLabel()
+        pixmap = QPixmap(obtenir_vrai_chemin("images/pp1.png")).scaled(25, 25, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
+        taille = min(pixmap.width(), pixmap.height())
+        user_pp.setPixmap(pixmap)
+        masque = QRegion(QRect(0, 0, taille, taille), QRegion.RegionType.Ellipse)   # On crée un "masque" circulaire qu'on va appliquer sur une image pour l'avoir en rond
+        user_pp.setMask(masque)
+
+        bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings1.svg"), custom_command=self.para)
+        bouton_deco = BoutonCustom(taille=(25, 25), custom_command=self.deco)
+
+        layout.addWidget(user_pp)
+        layout.addWidget(QLabel(self.session.user_info.get("username")))
+        layout.addWidget(bouton_para)
+        layout.addWidget(bouton_deco)
+
+        self.layout.addWidget(self.header_compte, 0, 0)        
+
     def _faire_interfaces(self):
         self.interface_barre_laterale = InterfaceBarreLaterale(session=self.session, liste_amis=self.liste_amis)
-        self.layout.addWidget(self.interface_barre_laterale, 0, 0, 2, 1)
+        self.layout.addWidget(self.interface_barre_laterale, 1, 0, 2, 1)
         self.interface_barre_laterale.contact_clique_event.connect(self.contact_clique)
         self.interface_barre_laterale.extra_bouton_clique_event.connect(self.extra_bouton_clique)
 
@@ -191,10 +213,7 @@ class InterfaceMessagerie(QWidget):
 
         self.layout.addWidget(self.ligne_categorie, 0, 1, Qt.AlignmentFlag.AlignTop)
 
-    def extra_bouton_clique(self, item):
-        data = item.data(Qt.ItemDataRole.UserRole)
-        print(f"Extra bouton cliqué : {data}")
-
+    def extra_bouton_clique(self, data:str):
         if data == "bouton_ami":
             self.ligne_categorie.setCurrentWidget(self.categorie_amis)
             self.changer_interface(self.interface_amis)
@@ -202,13 +221,17 @@ class InterfaceMessagerie(QWidget):
             self.ligne_categorie.setCurrentWidget(self.categorie_demandes)
             self.changer_interface(self.interface_demandes_recues)
     
-    def contact_clique(self, item=None, ami_id:int=None):
-        if item:
-            ami_id = item.data(Qt.ItemDataRole.UserRole)
+    def contact_clique(self, ami_id:int):
         print(f"Ami id cliqué : {ami_id}")
         self.mp_manager.choisir_conv(ami_id)
 
         self.changer_interface(self.interface_mp)
+
+    def para(self):
+        pass
+
+    def deco(self):
+        pass
 
 
     def new_friend(self, friend_id:int):
@@ -220,7 +243,7 @@ class InterfaceMessagerie(QWidget):
 
                 self.liste_amis.append(friend_id)
                 self.interface_amis.ajouter_ami(friend_id)
-                self.widget_colonne_contacts.ajouter_item(data=friend_id, widget=WidgetAmi(friend_id, self.cache))
+                self.interface_barre_laterale.ajouter_ami(friend_id)
 
             self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_infos(friend_id), func_succes=succes2, func_erreur=erreur)
         

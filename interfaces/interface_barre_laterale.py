@@ -29,7 +29,7 @@ class WidgetExtraBouton(QWidget):
 
 class InterfaceBarreLaterale(QWidget):
     contact_clique_event = pyqtSignal(int)
-    extra_bouton_clique_event = pyqtSignal()
+    extra_bouton_clique_event = pyqtSignal(str)
 
     def __init__(self, session, liste_amis:list):
         super().__init__()
@@ -39,8 +39,8 @@ class InterfaceBarreLaterale(QWidget):
 
         self.layout = QVBoxLayout(self)
         
-        self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique_event.emit)
-        self.widget_liste_extra_boutons = ListeElements(custom_command=self.extra_bouton_clique_event.emit)
+        self.widget_liste_extra_boutons = ListeElements(custom_command=self.extra_bouton_clique)
+        self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
 
         self._faire_ui()
 
@@ -51,10 +51,20 @@ class InterfaceBarreLaterale(QWidget):
         for ami_id in self.liste_amis:
             self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
 
-        self.layout.addWidget(self.widget_colonne_contacts)
         self.layout.addWidget(self.widget_liste_extra_boutons)
+        self.layout.addWidget(self.widget_colonne_contacts)
 
 
     def ajouter_ami(self, ami_id:int):
         self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
+
+    def extra_bouton_clique(self, item):
+        data = item.data(Qt.ItemDataRole.UserRole)
+        self.extra_bouton_clique_event.emit(data)
+
+    def contact_clique(self, item):
+        ami_id = item.data(Qt.ItemDataRole.UserRole)
+        self.contact_clique_event.emit(ami_id)
+
+
     
