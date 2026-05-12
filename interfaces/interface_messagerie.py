@@ -5,6 +5,8 @@ from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from autre_fonctions import obtenir_vrai_chemin
 
 from interfaces.interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
+
+from interfaces.interface_barre_laterale import InterfaceBarreLaterale
 from interfaces.interface_amis import InterfaceAmis
 from interfaces.interface_blocked import InterfaceBlocked
 from interfaces.interface_ajouter_ami import InterfaceAjouterAmi
@@ -76,37 +78,15 @@ class InterfaceMessagerie(QWidget):
         wsb.friend_removed.connect(lambda id_: self.remove_friend(id_, True))
 
     def _faire_ui(self):
-        self._faire_barre_laterale()
         self._faire_interfaces()
         self._faire_ligne_categorie()
-
-    def _faire_barre_laterale(self):
-        widget_barre_laterale = QWidget()
-        layout_barre_laterale = QVBoxLayout(widget_barre_laterale)
-
-        self.widget_colonne_contacts = ListeElements(custom_command=self.contact_clique)
-        for ami_id in self.liste_amis:
-            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
-
-
-        widget_logo = QLabel()
-
-
-        
-        widget_liste_extra_boutons = ListeElements(custom_command=self.extra_bouton_clique)
-
-        widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends_white.svg')))
-        widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes.svg')))
-
-
-        
-
-        layout_barre_laterale.addWidget(widget_liste_extra_boutons)
-        layout_barre_laterale.addWidget(self.widget_colonne_contacts)
-
-        self.layout.addWidget(widget_barre_laterale, 0, 0, 2, 1)
     
     def _faire_interfaces(self):
+        self.interface_barre_laterale = InterfaceBarreLaterale(session=self.session, liste_amis=self.liste_amis)
+        self.layout.addWidget(self.interface_barre_laterale, 0, 0, 2, 1)
+        self.interface_barre_laterale.contact_clique_event.connect(self.contact_clique)
+        self.interface_barre_laterale.extra_bouton_clique_event.connect(self.extra_bouton_clique)
+
         self.interface = QStackedWidget()
         self.layout.addWidget(self.interface, 1, 1)
 
