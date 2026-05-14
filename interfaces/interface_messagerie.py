@@ -11,6 +11,7 @@ from interfaces.interface_amis import InterfaceAmis
 from interfaces.interface_blocked import InterfaceBlocked
 from interfaces.interface_ajouter_ami import InterfaceAjouterAmi
 from interfaces.interface_demandes import InterfaceDemandesRecues, InterfaceDemandesEnvoyees
+from interfaces.interface_para import InterfacePara
 from interfaces.interface_debug import InterfaceDebug
 from interfaces.interface_mp import MpManager
 
@@ -93,7 +94,7 @@ class InterfaceMessagerie(QWidget):
         masque = QRegion(QRect(0, 0, taille, taille), QRegion.RegionType.Ellipse)   # On crée un "masque" circulaire qu'on va appliquer sur une image pour l'avoir en rond
         user_pp.setMask(masque)
 
-        bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings1.svg"), custom_command=self.para)
+        bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings1.svg"), custom_command=lambda : self.extra_bouton_clique("bouton_compte"))
         bouton_deco = BoutonCustom(taille=(25, 25), custom_command=self.deco)
 
         layout.addWidget(user_pp)
@@ -117,6 +118,7 @@ class InterfaceMessagerie(QWidget):
         self.interface_ajouter_amis = InterfaceAjouterAmi(session=self.session, test=self.test)
         self.interface_demandes_recues = InterfaceDemandesRecues(session=self.session, test=self.test)
         self.interface_demandes_envoyees = InterfaceDemandesEnvoyees(session=self.session, test=self.test)
+        self.interface_para = InterfacePara(session = self.session)
 
         self.mp_manager = MpManager(session=self.session)
         self.interface_mp = self.mp_manager.widget_conv
@@ -129,6 +131,7 @@ class InterfaceMessagerie(QWidget):
         self.interface_blocked.ami_unblock.connect(self.unblock_friend)
         self.interface.addWidget(self.interface_ajouter_amis)
         self.interface_ajouter_amis.nouv_demande.connect(lambda ami_id, ami_nom: self.interface_demandes_envoyees.ajouter_demande(ami_id=ami_id, ami_nom=ami_nom))
+        self.interface.addWidget(self.interface_para)
         
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
@@ -155,6 +158,9 @@ class InterfaceMessagerie(QWidget):
     def _faire_ligne_categorie(self):
         self.ligne_categorie = QStackedWidget()
 
+        self.categorie_vide = QWidget()
+        lay = QHBoxLayout(self.categorie_vide)
+        lay.addWidget
 
         layout_amis = QHBoxLayout()
         label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends_white.svg"))
@@ -206,7 +212,7 @@ class InterfaceMessagerie(QWidget):
         self.categorie_demandes.setLayout(layout_demandes)
 
 
-
+        self.ligne_categorie.addWidget(self.categorie_vide)
         self.ligne_categorie.addWidget(self.categorie_amis)
         self.ligne_categorie.addWidget(self.categorie_demandes)
         self.ligne_categorie.setCurrentWidget(self.categorie_amis)
@@ -214,6 +220,9 @@ class InterfaceMessagerie(QWidget):
         self.layout.addWidget(self.ligne_categorie, 0, 1, Qt.AlignmentFlag.AlignTop)
 
     def extra_bouton_clique(self, data:str):
+        if data == "bouton_compte":
+            self.ligne_categorie.setCurrentWidget(self.categorie_vide)
+            self.changer_interface(self.interface_para)
         if data == "bouton_ami":
             self.ligne_categorie.setCurrentWidget(self.categorie_amis)
             self.changer_interface(self.interface_amis)
@@ -227,12 +236,8 @@ class InterfaceMessagerie(QWidget):
 
         self.changer_interface(self.interface_mp)
 
-    def para(self):
-        pass
-
     def deco(self):
         pass
-
 
     def new_friend(self, friend_id:int):
         def succes(rep1):
@@ -301,6 +306,7 @@ class InterfaceMessagerie(QWidget):
             def succes(rep):
                 self.cache.unblock(friend_id)
                 self.interface_blocked.unblock(friend_id)
+                # Vous lisez vraiment ça ?
             
             def erreur(e):
                 print(f"Erreur serveur lors du débloquage de {friend_id} : {e}")

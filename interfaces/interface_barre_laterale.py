@@ -45,6 +45,7 @@ class InterfaceBarreLaterale(QWidget):
         self._faire_ui()
 
     def _faire_ui(self):
+        self.widget_liste_extra_boutons.ajouter_item(data="bouton_compte", widget=WidgetExtraBouton(texte="Mon Compte", icone=obtenir_vrai_chemin('images/settings1.svg')))
         self.widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends_white.svg')))
         self.widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes.svg')))
 

@@ -1,12 +1,52 @@
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from dataclasses import dataclass
 
 from interfaces.interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
 
+class LignePara(QWidget):
+    def __init__(self, titre:QLabel, label:QLabel, edit:QLineEdit):
+        super().__init__()
 
+        self.label = label
+        self.edit = edit
+
+        self.layout = QGridLayout(self)
+        self.layout.addWidget(titre, 0, 0)
+
+        self.entrees = QStackedWidget()
+        self.entrees.addWidget(self.label)
+        self.entrees.addWidget(self.edit)
+        self.entrees.setCurrentWidget(self.label)
+        self.layout.addWidget(self.entrees, 1, 0)
+
+        self.bouton_modifier = BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier)
+        self.bouton_sauvegarder = BoutonCustom(texte="Sauvegarder", taille=(100, 25), custom_command=self.sauvegarder)
+        self.bouton_annuler = BoutonCustom(texte="Annuler", taille=(100, 25), custom_command=self.annuler)
+        self.boutons_edit = QWidget()
+        edit_layout = QHBoxLayout(self.boutons_edit)
+        edit_layout.addWidget(self.bouton_sauvegarder)
+        edit_layout.addWidget(self.bouton_annuler)
+
+        self.boutons = QStackedWidget()
+        self.boutons.addWidget(self.bouton_modifier)
+        self.boutons.addWidget(self.boutons_edit)
+        self.boutons.setCurrentWidget(self.bouton_modifier)
+        self.layout.addWidget(self.boutons, 0, 1, 2, 1)
+    
+    def modifier(self):
+        self.entrees.setCurrentWidget(self.edit)
+        self.boutons.setCurrentWidget(self.boutons_edit)
+
+    def annuler(self):
+        self.entrees.setCurrentWidget(self.label)
+        self.boutons.setCurrentWidget(self.bouton_modifier)
+
+    def sauvegarder(self):
+        print("save")
+        pass
 
 class InterfacePara(QWidget):
     def __init__(self, session):
@@ -19,41 +59,36 @@ class InterfacePara(QWidget):
         self.faire_ui()
 
     def faire_ui(self):
-        widget_nom = QWidget()
-        nom_layout = QGridLayout(widget_nom)
-        nom_layout.addWidget(QLabel("Nom d'utilisateur"), 0, 0)
-        nom_layout.addWidget(QLabel(self.session.user_info.get("username")), 0, 1)
-        nom_layout.addWidget(BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier(1)))
-        self.layout.addWidget(widget_nom)
+        nom = self.session.user_info.get("username")
+        nom_edit = QLineEdit(nom)
+        nom_ligne = LignePara(titre=QLabel("Nom d'utilisateur"), label=QLabel(nom), edit=nom_edit)
+        self.layout.addWidget(nom_ligne)
 
-        widget_mail = QWidget()
-        mail_layout = QGridLayout(widget_mail)
-        mail_layout.addWidget(QLabel("E-Mail"), 0, 0)
-        mail = QLabel(self.session.user_info.get("mail"))
+        mail = self.session.user_info.get("mail")
         if '@' in mail:
             mail = mail.split('@')[1]
             mail = '**********@'+mail
         else:
             mail = '**********'
-        mail_layout.addWidget(mail, 0, 1)
-        mail_layout.addWidget(BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier(2)))
-        self.layout.addWidget(widget_mail)
+        mail_edit = QLineEdit(mail)
+        mail_ligne = LignePara(titre=QLabel("E-mail"), label=QLabel(mail), edit=mail_edit)
+        self.layout.addWidget(mail_ligne)
 
-        widget_num = QWidget()
-        num_layout = QGridLayout(widget_num)
-        num_layout.addWidget(QLabel("Numéro de Téléphone"), 0, 0)
-        num = self.censurer(self.session.user_info.get("phone"), 4)
-        num_layout.addWidget(QLabel(num), 0, 1)
-        num_layout.addWidget(BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier(3)))
-        self.layout.addWidget(widget_num)
+        num = self.session.user_info.get("phone")
+        if num:
+            num = self.censurer(num, 4)
+        else:
+            num = ''
+        num_edit = QLineEdit(num)
+        num_ligne = LignePara(titre=QLabel("Numéro de téléphone"), label=QLabel(num), edit=num_edit)
+        self.layout.addWidget(num_ligne)
 
-        widget_mdp = QWidget()
-        mdp_layout = QGridLayout(widget_mdp)
-        mdp_layout.addWidget(QLabel("Mot de passe"), 0, 0)
-        mdp_layout.addWidget(QLabel("[caché]"), 0, 1)
-        mdp_layout.addWidget(BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier(4)))
-        self.layout.addWidget(widget_mdp)
+        mdp = "[caché]"
+        mdp_edit = QLineEdit()
+        mdp_ligne = LignePara(titre=QLabel("Mot de passe"), label=QLabel(mdp), edit=mdp_edit)
+        self.layout.addWidget(mdp_ligne)
 
-    def censurer(mot:str, nb_visibles:int):
+    def censurer(self, mot:str, nb_visibles:int):
         n = len(mot)
         return '*' * max(0, n - nb_visibles) + mot[-nb_visibles:]   # On prend les "nb_visibles" caractères en partant de la fin
+    
