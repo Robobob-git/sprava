@@ -1,6 +1,6 @@
 import requests
 
-LIEN_API = "https://sprava-api-fc44f5e02dd0.herokuapp.com/" 
+LIEN_API = "http://100.30.122.130:8000/" 
 
 class GestionRequetes:
     def __init__(self, token=None):
@@ -32,7 +32,7 @@ class GestionRequetes:
         if rep.status_code == 200:
             return rep.json()
         elif rep.status_code == 401:
-            print(f"CODE : {rep.status_code}, Token invalide ou expiré")
+            print(f"CODE : {rep.status_code}, Token invalide ou expiré\net voici rep : {rep.json()}")
         elif rep.status_code == 500:
             print(f"CODE : {rep.status_code}, Erreur interne du serveur")
         else:
@@ -75,6 +75,21 @@ class GestionUtilisateurs:
             return rep.get('users')
         else:
             return
+
+    def changer_nom(self, nom:str):
+        body = {"username" : nom}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_username", type_de_r='post', body=body)
+        return rep
+
+    def changer_mail(self, mail:str):
+        body = {"mail" : mail}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_mail", type_de_r='post', body=body)
+        return rep
+    
+    def changer_mdp(self, mdp:str):
+        body = {"password" : mdp}
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_password", type_de_r='post', body=body)
+        return rep
 
     def changer_pp(self, pp_path:str):
         with open(pp_path, "rb") as image_file:
@@ -198,6 +213,7 @@ class GestionConnexions:
         rep = self.requetur_sans_token.faire_requete(url=f"/login", type_de_r='post',body=body)
         
         if rep.get('status_code') == 401:
+            print(rep)
             return
         else:
             print(rep)

@@ -35,7 +35,7 @@ class InterfaceDemandesRecues(QWidget):
 
     def _trouver_demandes_recues(self):
         def succes(rep):
-            if rep.get('friend_requests_ids') == []:
+            if rep is None or rep.get('friend_requests_ids') == []:
                 self.demandes = []
                 return
             self.demandes = [fr.get('sender_id') for fr in rep.get('friend_requests_ids')]
@@ -114,7 +114,7 @@ class InterfaceDemandesEnvoyees(QWidget):
     
     def _trouver_demandes_envoyees(self):
         def succes(rep):
-            if rep.get('sent_friend_requests_ids') == []:
+            if rep is None or rep.get('sent_friend_requests_ids') == []:
                 self.demandes = []
                 return
             self.demandes = [fr.get('receiver_id') for fr in rep.get('sent_friend_requests_ids')]

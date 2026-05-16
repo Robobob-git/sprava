@@ -31,7 +31,8 @@ class MpManager(QObject):
 
 
     def ajouter_conv(self, ami_id:int):
-        mp = InterfaceMP(ami_id, self.session)
+        conv_id = self.session.cache.conv_id_par_ami_id(ami_id)
+        mp = InterfaceMP(conv_id, ami_id, self.session)
         mp.envoi_msg.connect(lambda ami_id, msg : self.envoi_msg.emit(ami_id, msg))
         self.mps[ami_id] = mp
         self.widget_conv.addWidget(mp)
@@ -124,9 +125,10 @@ class MessageWidget(QWidget):
 class InterfaceMP(QWidget):
     envoi_msg = pyqtSignal(int, str)
 
-    def __init__(self, ami_id, session):
+    def __init__(self, conv_id:int, ami_id:int, session):
         super().__init__()
         
+        self.conv_id = conv_id
         self.ami_id = ami_id
         self.session = session
 
@@ -139,6 +141,7 @@ class InterfaceMP(QWidget):
         self.setLayout(self.layout)
 
         self._faire_ui()
+        self.charger_tout()
     
     def _faire_ui(self):
         '''self.windget_total.setContentsMargins(0, 0, 0, 0)
@@ -146,8 +149,8 @@ class InterfaceMP(QWidget):
 
 
         self.zone_scroll = QScrollArea()
-        '''self.zone_scroll.setWidgetResizable(True)
-        self.zone_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.zone_scroll.setWidgetResizable(True)
+        '''self.zone_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.zone_scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
@@ -169,8 +172,7 @@ class InterfaceMP(QWidget):
 
         self.conv = QWidget()
         '''self.conv.setStyleSheet("background-color: #36393f;")'''
-        self.conv_layout = QVBoxLayout()
-        self.conv.setLayout(self.conv_layout)
+        self.conv_layout = QVBoxLayout(self.conv)
         '''self.conv_layout.setContentsMargins(0, 10, 0, 10)
         self.conv_layout.setSpacing(0)
         self.conv_layout.addStretch()'''
@@ -210,14 +212,28 @@ class InterfaceMP(QWidget):
         self.ecrire_layout.addWidget(self.ecrire_msg)
         self.ecrire_layout.addWidget(self.bouton_envoyer)
 
-        self.layout.addWidget(self.conv)
+        self.layout.addWidget(self.zone_scroll)
         self.layout.addWidget(self.ecrire_widget)
     
+    def charger_tout(self):
+        print(f"\nCONV ID : {self.conv_id}")
+        messages = self.cache.lire_msgs(self.conv_id)
+        print(f'messages : {messages}')
+
+        for msg in messages:
+            id_ = msg["auteur_id"]
+            if id_ == self.session.user_id:
+                auteur = self.session.user_info["username"]
+            else:
+                auteur = self.cache.ami_par_id(id_).username
+
+            self.ajouter_msg(auteur=auteur, message=msg['contenu'], heure=msg["timestamp"])
+
     def ajouter_msg(self, auteur:str, message:str, heure=None, pp_id=None):
         message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
         
         self.conv_layout.addWidget(message_widget)
-        #self.conv_layout.insertWidget(self.conv_layout.count() - 1, message_widget)    # Le met avant, jsp pk c'est là
+        '''self.zone_scroll.ensureWidgetVisible(message_widget)    # "Attend" que la taille du widget sois calculée poru bien scroll au plus bas '''
         self.messages.append(message_widget)
         
         self.scroll_en_bas()
@@ -230,5 +246,6 @@ class InterfaceMP(QWidget):
         texte = self.ecrire_msg.text().strip()
         if texte:
             self.envoi_msg.emit(self.ami_id, texte)
+            self.ecrire_msg.clear() # Met vide la zone où on écrit le message à envoyer
 
 

@@ -59,6 +59,9 @@ class InterfaceBarreLaterale(QWidget):
     def ajouter_ami(self, ami_id:int):
         self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
 
+    def retirer_ami(self, ami_id:int):
+        self.widget_colonne_contacts.retirer_item(data=ami_id)
+
     def extra_bouton_clique(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)
         self.extra_bouton_clique_event.emit(data)

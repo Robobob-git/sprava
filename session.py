@@ -32,6 +32,7 @@ class Session:
         self.ws_bridge = None
 
     def fermer(self) -> None:
+        self.requettes_manager.cleanup_all()
         self.stop_ws()
         self.cache.invalider_tout()
         self.cache.fermer()

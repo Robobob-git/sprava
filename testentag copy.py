@@ -1,0 +1,64 @@
+import requests
+import hashlib
+
+from gestionnaires_requetes import GestionAmis, GestionConnexions, GestionUtilisateurs
+from autre_fonctions import obtenir_vrai_chemin
+
+
+def main():
+    '''import os
+    os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
+
+    gestionnaire_connections = GestionConnexions()
+
+    rep1 = gestionnaire_connections.connexion(mail="f1@mail.com", mdp="f1")
+    #rep2 = gestionnaire_connections.connexion(mail="p2@mail.com", mdp="p2")
+
+    token1 = rep1.get("api_token")
+    user_id1 = rep1.get("user_id")
+    '''token2 = rep2.get("api_token")
+    user_id2 = rep2.get("user_id")'''
+
+
+    gestionnaire_amis1 = GestionAmis(token=token1)
+    '''gestionnaire_amis2 = GestionAmis(token=token2)'''
+
+    gestionnaire_utilisateur1 = GestionUtilisateurs(token=token1)
+
+
+    id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
+    print(f'AMIS : {id_amis1}')
+    id_blocked1:list = gestionnaire_amis1.obtenir_blocked_ids()
+    print(f'BLOCKED : {id_blocked1}')
+
+    if id_amis1 == []:
+        if id_blocked1:
+            for id_ in id_blocked1:
+                gestionnaire_amis1.debloquer_ami(id_)
+        '''gestionnaire_amis2.demander_en_ami("p1")'''
+        demandes_de_amis1 = gestionnaire_amis1.obtenir_demandes_amis_recues()
+        print(f'amis 1 a : {demandes_de_amis1}')
+
+        gestionnaire_amis1.obtenir_demandes_amis_envoyees()
+        '''gestionnaire_amis2.obtenir_demandes_amis_envoyees()'''
+        #gestionnaire_amis1.accepter_demande_ami("p2")
+
+    if id_amis1 != []:
+        id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
+        print(f"d'abord : {id_amis1}")
+
+        '''print(f'user_id : {user_id2}')
+        gestionnaire_amis1.enlever_ami(ami_id=user_id2)'''
+
+        id_amis1:list = gestionnaire_amis1.obtenir_amis(seulement_ids=True)
+        print(f"ensuite : {id_amis1}")
+
+
+if __name__ == "__main__":
+    print("début")
+    
+    main()
+    
+    print("fin")
+

@@ -23,6 +23,8 @@ class InterfaceLogin(QWidget):
         self.requettes_manager = RequettesManager()
         self.gestionnaire_connexions = GestionConnexions()
 
+        self.interface_messagerie = None
+
         self.moyen_connexion_actuel = "Connexion"
 
         self.faire_interface()
@@ -173,19 +175,26 @@ class InterfaceLogin(QWidget):
         print(f"token : {self.token}")
         print("Connecté avec succès")
         self.session = Session(user_info=self.user_info, token=self.token, requettes_manager=self.requettes_manager)
-        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
-        self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
-        self.fenetre_principale.changer_interface(interface_messagerie)
+        self.interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
+        self.interface_messagerie.deconnexion.connect(self.deconnexion)
+        self.fenetre_principale.changer_interface(self.interface_messagerie)
 
     def connexion_confirmee_test(self):
         print("MODE TEST")
         user_info = {'user_id':999, 'username':'test', 'mail':'test@mail.com', 'phone':None, 'date_of_birth':'2000-01-01'}
         self.session = Session(user_info=user_info, token="", requettes_manager="", test=True)
-        interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session, test=True)
-        self.fenetre_principale.ajouter_interface(interface=interface_messagerie, ligne=1, col=0)
-        self.fenetre_principale.changer_interface(interface_messagerie)
+        self.interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session, test=True)
+        self.interface_messagerie.deconnexion.connect(self.deconnexion)
+        self.fenetre_principale.changer_interface(self.interface_messagerie)
 
     def inscription_confirmee(self):
         print(f"token : {self.token}")
         self.changer_moyen_connexion()
         QMessageBox.information(self, "INFO", "Compte crée avec succès")
+
+    def deconnexion(self):
+        self.fenetre_principale.changer_interface(self)
+
+        self.fenetre_principale.suppr_interface(self.interface_messagerie)
+        self.interface_messagerie = None
+

@@ -14,9 +14,9 @@ from interfaces.interface_login import InterfaceLogin
 
 # Exécution de l'application
 def main():
-    import os
+    '''import os
     os.environ["HTTP_PROXY"] = "http://192.168.228.254:3128"
-    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"
+    os.environ["HTTPS_PROXY"] = "http://192.168.228.254:3128"'''
     import os
 
     def print_proxy_env():
@@ -43,7 +43,7 @@ def main():
     fenetre_principale_instance = FenetrePrincipale()
 
     interface_login_instance = InterfaceLogin(fenetre_principale_instance)
-    fenetre_principale_instance.ajouter_interface(interface=interface_login_instance, ligne=0, col=0)
+    fenetre_principale_instance.changer_interface(interface=interface_login_instance)
 
 
 

@@ -1,6 +1,8 @@
-import sqlite3
+﻿import sqlite3
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
+
+TTL_AMIS = timedelta(minutes=5)
 
 class Ami:
     def __init__(self, id:int, username:str, pp_id:int = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False, conv_id:int = None):
@@ -86,18 +88,38 @@ class Cache:
             );
 
             CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
                 conv_id INTEGER NOT NULL,
-                msg_id INTEGER NOT NULL,
                 auteur_id INTEGER NOT NULL,
                 contenu TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
-                lu INTEGER NOT NULL DEFAULT 0,
-                PRIMARY KEY (conv_id, msg_id)
+                lu INTEGER NOT NULL DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS idx_messages_conv
                 ON messages(conv_id, timestamp);
         """)
         self._conn.commit()
+
+    # TTL
+
+    def _get_meta(self, cle: str):
+        row = self._conn.execute("SELECT valeur FROM cache_meta WHERE cle = ?", (cle,)).fetchone()
+        return row["valeur"] if row else None
+
+    def _set_meta(self, cle: str, valeur: str):
+        with self._conn:
+            self._conn.execute(
+                "INSERT OR REPLACE INTO cache_meta (cle, valeur) VALUES (?, ?)",
+                (cle, valeur)
+            )
+
+    def est_perime(self) -> bool:
+        """True si le cache des amis n'a jamais été sync ou si TTL expiré."""
+        derniere_sync = self._get_meta("amis_sync_at")
+        if not derniere_sync:
+            return True
+        age = datetime.now() - datetime.fromisoformat(derniere_sync)
+        return age > TTL_AMIS
 
     # Lecture (depuis dict mémoire uniquement)
 
@@ -138,6 +160,7 @@ class Cache:
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 [(a.id, a.username, a.pp_id, a.mail, a.phone, a.date_of_birth, a.conv_id) for a in amis]
             )
+        self._set_meta("amis_sync_at", datetime.now().isoformat())
         # Mise à jour du dict (on préserve les statuts online déjà en mémoire)
         for a in amis:
             if a.id in self._amis:
@@ -178,30 +201,42 @@ class Cache:
             self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
         self._blocked.pop(id_, None)  
 
-    def add_msg(self, conv_id:int, msg_id:int, auteur_id:int, msg:str, timestamp:str=None):
+    def add_msg(self, id_:int, conv_id:int, auteur_id:int, msg:str, timestamp:str=None):
         if timestamp is None:
-            timestamp = str(datetime.now(timezone.utc).isoformat())
-        with self._conn:
-            self._conn.execute("INSERT OR IGNORE INTO messages (conv_id, msg_id, auteur_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, 0)", (conv_id, msg_id, auteur_id, msg, timestamp))
+            timestamp = str(datetime.now())
+        self.upsert_msg(message_id=id_, conv_id=conv_id, auteur_id=auteur_id, contenu=msg, timestamp=timestamp, lu=0)
 
-    def lire_msgs(self, conv_id:int, limite:int=50, offset:int=0, ordre:str="asc") -> list[dict]:
+    def upsert_msg(self, message_id:int, conv_id:int, auteur_id:int, contenu:str, timestamp:str, lu:int=0):
+        with self._conn:
+            self._conn.execute(
+                "INSERT OR REPLACE INTO messages (id, conv_id, auteur_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, ?)",
+                (message_id, conv_id, auteur_id, contenu, timestamp, lu)
+            )
+
+    def lire_msgs(self, conv_id:int, limit:int=50, offset:int=0, ordre:str="desc") -> list[dict]:
         ordre_sql = "DESC" if ordre.lower() == "desc" else "ASC"
-        rows = self._conn.execute(f"SELECT msg_id, auteur_id, contenu, timestamp, lu FROM messages WHERE conv_id = ? ORDER BY timestamp {ordre_sql} LIMIT ? OFFSET ?", (conv_id, limite, offset)).fetchall()
+        rows = self._conn.execute(
+            f"SELECT id, conv_id, auteur_id, contenu, timestamp, lu FROM messages WHERE conv_id = ? ORDER BY timestamp {ordre_sql} LIMIT ? OFFSET ?",
+            (conv_id, limit, offset)
+        ).fetchall()
         return [dict(r) for r in rows]
 
-    def nettoyer_conv(self, conv_id:int):
+    def purger_conv(self, conv_id:int):
         with self._conn:
             self._conn.execute("DELETE FROM messages WHERE conv_id = ?", (conv_id,))
 
-    def infos_dernier_msg(self, conv_id:int):
-        row = self._conn.execute("SELECT msg_id, timestamp FROM messages WHERE conv_id = ? ORDER BY timestamp DESC LIMIT 1", (conv_id,)).fetchone()
+    def get_last_msg_meta(self, conv_id:int):
+        row = self._conn.execute(
+            "SELECT id, timestamp FROM messages WHERE conv_id = ? ORDER BY timestamp DESC LIMIT 1",
+            (conv_id,)
+        ).fetchone()
         if row is None:
             return None
         return (row["id"], row["timestamp"])
 
     def mettre_lu(self, conv_id:int):
         with self._conn:
-            self._conn.execute("UPDATE messages SET lu = 1 WHERE conv_id = ?", (conv_id))
+            self._conn.execute("UPDATE messages SET lu = 1 WHERE conv_id = ?", (conv_id,))
 
     def set_statut_ami(self, id_: int, online: bool):
         """Met à jour le statut online/offline"""

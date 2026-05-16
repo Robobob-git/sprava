@@ -7,6 +7,8 @@ from interfaces.interface_graphique import ListeElements, BoutonCustom
 from autre_fonctions import obtenir_vrai_chemin
 
 class LignePara(QWidget):
+    save = pyqtSignal()
+
     def __init__(self, titre:QLabel, label:QLabel, edit:QLineEdit):
         super().__init__()
 
@@ -22,9 +24,9 @@ class LignePara(QWidget):
         self.entrees.setCurrentWidget(self.label)
         self.layout.addWidget(self.entrees, 1, 0)
 
-        self.bouton_modifier = BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.modifier)
-        self.bouton_sauvegarder = BoutonCustom(texte="Sauvegarder", taille=(100, 25), custom_command=self.sauvegarder)
-        self.bouton_annuler = BoutonCustom(texte="Annuler", taille=(100, 25), custom_command=self.annuler)
+        self.bouton_modifier = BoutonCustom(texte="Modifier", taille=(100, 25), custom_command=self.mode_modif)
+        self.bouton_sauvegarder = BoutonCustom(texte="Sauvegarder", taille=(100, 25), custom_command=self.save.emit)
+        self.bouton_annuler = BoutonCustom(texte="Annuler", taille=(100, 25), custom_command=self.mode_base)
         self.boutons_edit = QWidget()
         edit_layout = QHBoxLayout(self.boutons_edit)
         edit_layout.addWidget(self.bouton_sauvegarder)
@@ -36,23 +38,22 @@ class LignePara(QWidget):
         self.boutons.setCurrentWidget(self.bouton_modifier)
         self.layout.addWidget(self.boutons, 0, 1, 2, 1)
     
-    def modifier(self):
+    def mode_modif(self):
         self.entrees.setCurrentWidget(self.edit)
         self.boutons.setCurrentWidget(self.boutons_edit)
 
-    def annuler(self):
+    def mode_base(self):
         self.entrees.setCurrentWidget(self.label)
         self.boutons.setCurrentWidget(self.bouton_modifier)
 
-    def sauvegarder(self):
-        print("save")
-        pass
-
 class InterfacePara(QWidget):
+    nouv_nom = pyqtSignal(str)
+
     def __init__(self, session):
         super().__init__()
 
         self.session = session
+        self.requettes_manager = self.session.requettes_manager
 
         self.layout = QVBoxLayout(self)
 
@@ -60,9 +61,11 @@ class InterfacePara(QWidget):
 
     def faire_ui(self):
         nom = self.session.user_info.get("username")
-        nom_edit = QLineEdit(nom)
-        nom_ligne = LignePara(titre=QLabel("Nom d'utilisateur"), label=QLabel(nom), edit=nom_edit)
-        self.layout.addWidget(nom_ligne)
+        self.nom_label = QLabel(nom)
+        self.nom_edit = QLineEdit(nom)
+        self.nom_ligne = LignePara(titre=QLabel("Nom d'utilisateur"), label=self.nom_label, edit=self.nom_edit)
+        self.nom_ligne.save.connect(self.changer_nom)
+        self.layout.addWidget(self.nom_ligne)
 
         mail = self.session.user_info.get("mail")
         if '@' in mail:
@@ -70,25 +73,67 @@ class InterfacePara(QWidget):
             mail = '**********@'+mail
         else:
             mail = '**********'
-        mail_edit = QLineEdit(mail)
-        mail_ligne = LignePara(titre=QLabel("E-mail"), label=QLabel(mail), edit=mail_edit)
-        self.layout.addWidget(mail_ligne)
-
-        num = self.session.user_info.get("phone")
-        if num:
-            num = self.censurer(num, 4)
-        else:
-            num = ''
-        num_edit = QLineEdit(num)
-        num_ligne = LignePara(titre=QLabel("Numéro de téléphone"), label=QLabel(num), edit=num_edit)
-        self.layout.addWidget(num_ligne)
+        self.mail_label = QLabel(mail)
+        self.mail_edit = QLineEdit()
+        self.mail_ligne = LignePara(titre=QLabel("E-mail"), label=self.mail_label, edit=self.mail_edit)
+        self.mail_ligne.save.connect(self.changer_mail)
+        self.layout.addWidget(self.mail_ligne)
 
         mdp = "[caché]"
-        mdp_edit = QLineEdit()
-        mdp_ligne = LignePara(titre=QLabel("Mot de passe"), label=QLabel(mdp), edit=mdp_edit)
-        self.layout.addWidget(mdp_ligne)
-
-    def censurer(self, mot:str, nb_visibles:int):
-        n = len(mot)
-        return '*' * max(0, n - nb_visibles) + mot[-nb_visibles:]   # On prend les "nb_visibles" caractères en partant de la fin
+        self.mdp_label = QLabel(mdp)
+        self.mdp_edit = QLineEdit()
+        self.mdp_ligne = LignePara(titre=QLabel("Mot de passe"), label=self.mdp_label, edit=self.mdp_edit)
+        self.mdp_ligne.save.connect(self.changer_mdp)
+        self.layout.addWidget(self.mdp_ligne)
     
+    def changer_nom(self):
+        nom = self.nom_edit.text()
+
+        def succes(rep):
+            print('Nom changé')
+            self.nouv_nom.emit(nom)
+
+            self.nom_label.setText(nom)
+            self.nom_edit.setText(nom)
+            self.session.user_info["username"] = nom
+            self.nom_ligne.mode_base()
+        def erreur(e):
+            print(f"Erreur lors du changement de nom")
+        
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_nom(nom), func_succes=succes, func_erreur=erreur)
+    
+    def changer_mail(self):
+        mail = self.mail_edit.text()
+
+        def succes(rep):
+            print('Mail changé')
+
+            if '@' in mail:
+                mail = mail.split('@')[1]
+                mail = '**********@'+mail
+            else:
+                mail = '**********'
+
+            self.mail_label.setText(mail)
+            self.mail_edit.setText("")
+            self.session.user_info["mail"] = mail
+            self.mail_ligne.mode_base()
+        def erreur(e):
+            print(f"Erreur lors du changement de mail")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_mail(mail), func_succes=succes, func_erreur=erreur)
+    
+    def changer_mdp(self):
+        mdp = self.mdp_edit.text()
+
+        def succes(rep):
+            print('Mdp changé')
+            
+            self.mdp_edit.setText("")
+            print(f'user info : {self.session.user_info}')
+            self.session.user_info["password"] = mdp
+            self.mdp_ligne.mode_base()
+        def erreur(e):
+            print(f"Erreur lors du changement de mdp")
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_mdp(mdp), func_succes=succes, func_erreur=erreur)

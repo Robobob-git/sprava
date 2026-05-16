@@ -40,6 +40,8 @@ class WidgetExtraBouton(QWidget):
         layout.addStretch()
 
 class InterfaceMessagerie(QWidget):
+    deconnexion = pyqtSignal()
+
     def __init__(self, fenetre_principale:QMainWindow, session, test:bool=False):
         super().__init__()
         self.fenetre_principale = fenetre_principale
@@ -87,6 +89,8 @@ class InterfaceMessagerie(QWidget):
         self.header_compte = QWidget()
         layout = QHBoxLayout(self.header_compte)
 
+        self.nom_label = QLabel(self.session.user_info.get("username"))
+
         user_pp = QLabel()
         pixmap = QPixmap(obtenir_vrai_chemin("images/pp1.png")).scaled(25, 25, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
         taille = min(pixmap.width(), pixmap.height())
@@ -98,7 +102,7 @@ class InterfaceMessagerie(QWidget):
         bouton_deco = BoutonCustom(taille=(25, 25), custom_command=self.deco)
 
         layout.addWidget(user_pp)
-        layout.addWidget(QLabel(self.session.user_info.get("username")))
+        layout.addWidget(self.nom_label)
         layout.addWidget(bouton_para)
         layout.addWidget(bouton_deco)
 
@@ -132,6 +136,7 @@ class InterfaceMessagerie(QWidget):
         self.interface.addWidget(self.interface_ajouter_amis)
         self.interface_ajouter_amis.nouv_demande.connect(lambda ami_id, ami_nom: self.interface_demandes_envoyees.ajouter_demande(ami_id=ami_id, ami_nom=ami_nom))
         self.interface.addWidget(self.interface_para)
+        self.interface_para.nouv_nom.connect(self.nom_label.setText)
         
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
@@ -237,7 +242,8 @@ class InterfaceMessagerie(QWidget):
         self.changer_interface(self.interface_mp)
 
     def deco(self):
-        pass
+        self.session.fermer()
+        self.deconnexion.emit()
 
     def new_friend(self, friend_id:int):
         def succes(rep1):
@@ -264,13 +270,13 @@ class InterfaceMessagerie(QWidget):
             if localement:
                 self.cache.invalider_ami(friend_id)
                 self.interface_amis.retirer_ami(friend_id)
-                self.widget_colonne_contacts.retirer_item(data=friend_id)
+                self.interface_barre_laterale.retirer_ami(friend_id)
                 self.liste_amis.remove(friend_id)
             else:
                 def succes(rep):
                     self.cache.invalider_ami(friend_id)
                     self.interface_amis.retirer_ami(friend_id)
-                    self.widget_colonne_contacts.retirer_item(data=friend_id)
+                    self.interface_barre_laterale.retirer_ami(friend_id)
                     self.liste_amis.remove(friend_id)
 
                 def erreur(e):
@@ -316,8 +322,7 @@ class InterfaceMessagerie(QWidget):
     def send_msg(self, friend_id:int, msg:str):
         conv_id = self.cache.conv_id_par_ami_id(friend_id)
         def succes(rep):
-            msg_id = rep.get('message_id')  # id du message dans la conv
-            self.cache.add_msg(id_=friend_id, conv_id=conv_id, auteur_id=self.session.user_info.get('username'), msg=msg)
+            self.cache.add_msg(conv_id=conv_id, msg_id=rep.get('message_id'), auteur_id=rep.get('sender_id'), msg=msg)
 
             self.mp_manager.ajouter_msg(ami_id=friend_id, auteur=self.session.user_info.get('username'), message=msg)
         def erreur(e):
@@ -333,7 +338,7 @@ class InterfaceMessagerie(QWidget):
             return
         
         ami = self.cache.ami_par_id(msg_infos.get("sender_id"))
-        self.cache.add_msg(id_=ami.id, conv_id=msg_infos.get("conversation_id"), auteur_id=ami.id, msg=msg_infos.get("content"), timestamp=msg_infos.get('created_at'))
+        self.cache.add_msg(conv_id=msg_infos.get("conversation_id"), msg_id=msg_infos.get("message_id"), auteur_id=ami.id, msg=msg_infos.get("content"), timestamp=msg_infos.get('created_at'))
         self.mp_manager.ajouter_msg(ami_id=ami.id, auteur=ami.username, message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id)
 
     def friend_update(self, friend_id:int, new_pseudo:str, new_pp:str):
@@ -346,8 +351,8 @@ class InterfaceMessagerie(QWidget):
             self.interface_amis.retirer_ami(friend_id)
             self.interface_amis.ajouter_ami(friend_id)
 
-            self.widget_colonne_contacts.retirer_item(friend_id)
-            self.widget_colonne_contacts.ajouter_item(friend_id, WidgetAmi(friend_id, self.cache))
+            self.interface_barre_laterale.retirer_ami(friend_id)
+            self.interface_barre_laterale.ajouter_ami(friend_id)
 
             self.mp_manager.supprimer_conv(friend_id)
             self.mp_manager.ajouter_conv(friend_id)
@@ -384,6 +389,8 @@ class InterfaceMessagerie(QWidget):
 
     def trouver_blocked(self) -> None:
         def succes1(rep1):    # Ici rep renvoie direct la liste d'ids
+            if rep1 is None:
+                return
             blocked_cache = self.cache.blocked_ids()
             if sorted(blocked_cache) != sorted(rep1):
                 def succes2(rep2):  # Ici renvoie direct une liste de dicos

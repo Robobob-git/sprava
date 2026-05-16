@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
 from autre_fonctions import obtenir_vrai_chemin
@@ -23,45 +23,24 @@ class FenetrePrincipale(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Création du layout en grille pour le contenu
-        contenu_widget = QWidget()
-        self.layout = QGridLayout()
-        #self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        contenu_widget.setLayout(self.layout)
+        self.contenu_widget = QStackedWidget()
+        self.interfaces = []
 
         # Met le widget de contenu dans le layout principal
-        main_layout.addWidget(contenu_widget)
-
-        self.menu_principal_bouton()
-
-        #self.construire_logo()
-        self.restore_menu_principal() # Construit la fenêtre principale (la première fois), cette fonction peut être rappelée plus tard pour re-afficher la fenêtre principale
-
-    def ajouter_interface(self, interface, ligne, col):
-        self.layout.addWidget(interface, ligne, col)
+        main_layout.addWidget(self.contenu_widget)
 
     def changer_interface(self, interface):
-        self.clear_layout()
-        interface.show()
+        if interface not in self.interfaces:
+            self.interfaces.append(interface)
+            self.contenu_widget.addWidget(interface)
 
-    def nouvelle_page(self):
-      self.clear_layout()
-
-    def clear_layout(self):
-      # Boucle qui cache tous les widgets dans le layout
-      for i in range(self.layout.count()):
-        child = self.layout.itemAt(i)
-        if child.widget():
-          child.widget().hide()
-
-    def restore_menu_principal(self):
-      self.clear_layout()
-      #self.logo_menu_principal.show()
+        self.contenu_widget.setCurrentWidget(interface)
     
-    def menu_principal_bouton(self):
-      menu_principal_bouton = BoutonCustom("Menu principal", taille=(100, 50), custom_command=self.restore_menu_principal, nouvelle_page=False)
-      menu_principal_bouton.hide()
-      self.central_widget.layout().addWidget(menu_principal_bouton, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
-
+    def suppr_interface(self, interface):
+        if interface in self.interfaces:
+            self.interfaces.remove(interface)
+            self.contenu_widget.removeWidget(interface)
+            interface.deleteLater()
 
 class BoutonCustom(QPushButton):
     def __init__(self, texte:str=None, taille=(200, 200), marge:int = 0, style:str=None, chemin_image:str = None, custom_command = None, nouvelle_page:bool = False):

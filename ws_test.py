@@ -3,7 +3,7 @@ from typing import Callable
 
 class WSClient:
     def __init__(self, token: str, session, on_ui: Callable):
-        self.url = "https://sprava-api-fc44f5e02dd0.herokuapp.com/socket.io/"
+        self.url = "http://100.30.122.130:8000/socket.io"
         self.token = token
         self.session = session          # accès cache + managers
         self.on_ui = on_ui              # callback thread-safe vers Qt
