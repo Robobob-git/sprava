@@ -45,9 +45,9 @@ class InterfaceBarreLaterale(QWidget):
         self._faire_ui()
 
     def _faire_ui(self):
-        self.widget_liste_extra_boutons.ajouter_item(data="bouton_compte", widget=WidgetExtraBouton(texte="Mon Compte", icone=obtenir_vrai_chemin('images/settings1.svg')))
+        self.widget_liste_extra_boutons.ajouter_item(data="bouton_compte", widget=WidgetExtraBouton(texte="Mon Compte", icone=obtenir_vrai_chemin('images/settings_white.svg')))
         self.widget_liste_extra_boutons.ajouter_item(data="bouton_ami", widget=WidgetExtraBouton(texte="Mes Amis", icone=obtenir_vrai_chemin('images/friends_white.svg')))
-        self.widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes.svg')))
+        self.widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes_white.svg')))
 
         for ami_id in self.liste_amis:
             self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))

@@ -80,8 +80,8 @@ class InterfaceDemandesRecues(QWidget):
         l = QHBoxLayout()
         w.setLayout(l)
         label = QLabel(ami_nom)
-        bouton_acc = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/accept.svg"), custom_command=lambda ami_id=ami_id, ami_nom=ami_nom: self.accepter_demande(ami_id=ami_id, ami_nom=ami_nom))
-        bouton_ref = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda ami_id=ami_id: self.refuser_demande(ami_id))
+        bouton_acc = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/accept_white.svg"), custom_command=lambda ami_id=ami_id, ami_nom=ami_nom: self.accepter_demande(ami_id=ami_id, ami_nom=ami_nom))
+        bouton_ref = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny_white.svg"), custom_command=lambda ami_id=ami_id: self.refuser_demande(ami_id))
         
         l.addWidget(label)
         l.addWidget(bouton_acc)
@@ -145,7 +145,7 @@ class InterfaceDemandesEnvoyees(QWidget):
         l = QHBoxLayout()
         w.setLayout(l)
         label = QLabel(ami_nom)
-        bouton_annuler = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny.svg"), custom_command=lambda ami_id=ami_id: self.annuler_demande(ami_id))
+        bouton_annuler = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/deny_white.svg"), custom_command=lambda ami_id=ami_id: self.annuler_demande(ami_id))
         
         l.addWidget(label)
         l.addWidget(bouton_annuler)

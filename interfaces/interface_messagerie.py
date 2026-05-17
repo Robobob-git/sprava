@@ -98,8 +98,8 @@ class InterfaceMessagerie(QWidget):
         masque = QRegion(QRect(0, 0, taille, taille), QRegion.RegionType.Ellipse)   # On crée un "masque" circulaire qu'on va appliquer sur une image pour l'avoir en rond
         user_pp.setMask(masque)
 
-        bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings1.svg"), custom_command=lambda : self.extra_bouton_clique("bouton_compte"))
-        bouton_deco = BoutonCustom(taille=(25, 25), custom_command=self.deco)
+        bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings_white.svg"), custom_command=lambda : self.extra_bouton_clique("bouton_compte"))
+        bouton_deco = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/disconnect_white.svg"), custom_command=self.deco)
 
         layout.addWidget(user_pp)
         layout.addWidget(self.nom_label)
@@ -204,7 +204,7 @@ class InterfaceMessagerie(QWidget):
 
 
         layout_demandes = QHBoxLayout()
-        label_logo_demandes = TexteEtImage(texte="Demandes", chemin_image=obtenir_vrai_chemin("images/demandes.svg"))
+        label_logo_demandes = TexteEtImage(texte="Demandes", chemin_image=obtenir_vrai_chemin("images/demandes_white.svg"))
         bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_recues))
         bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_envoyees))
         groupe_boutons_demandes = GroupeBoutons([bouton_recues, bouton_envoyees])
@@ -322,9 +322,7 @@ class InterfaceMessagerie(QWidget):
     def send_msg(self, friend_id:int, msg:str):
         conv_id = self.cache.conv_id_par_ami_id(friend_id)
         def succes(rep):
-            self.cache.add_msg(conv_id=conv_id, msg_id=rep.get('message_id'), auteur_id=rep.get('sender_id'), msg=msg)
-
-            self.mp_manager.ajouter_msg(ami_id=friend_id, auteur=self.session.user_info.get('username'), message=msg)
+            self.mp_manager.ajouter_msg(msg_id=rep['message_id'], ami_id=friend_id, sender_id=self.session.user_id, message=msg, avec_cache=True)
         def erreur(e):
             print(f"Erreur serveur lors de l'envoi d'un message à {friend_id} : {e}")
 
@@ -338,8 +336,7 @@ class InterfaceMessagerie(QWidget):
             return
         
         ami = self.cache.ami_par_id(msg_infos.get("sender_id"))
-        self.cache.add_msg(conv_id=msg_infos.get("conversation_id"), msg_id=msg_infos.get("message_id"), auteur_id=ami.id, msg=msg_infos.get("content"), timestamp=msg_infos.get('created_at'))
-        self.mp_manager.ajouter_msg(ami_id=ami.id, auteur=ami.username, message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id)
+        self.mp_manager.ajouter_msg(msg_id=msg_infos['message_id'], ami_id=ami.id, sender_id=msg_infos['sender_id'], message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id, avec_cache=True)
 
     def friend_update(self, friend_id:int, new_pseudo:str, new_pp:str):
         old_ami = self.cache.ami_par_id(friend_id)

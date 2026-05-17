@@ -37,7 +37,7 @@ class WidgetBlocked(QWidget):
 
         self.layout.addStretch()
 
-        self.bouton_block = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/block.svg"), custom_command=lambda b=self.blocked_id: self.ami_unblock.emit(b))
+        self.bouton_block = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/block_white.svg"), custom_command=lambda b=self.blocked_id: self.ami_unblock.emit(b))
         self.layout.addWidget(self.bouton_block)
         
 
@@ -80,7 +80,7 @@ class WidgetAmi(QWidget):
         self.layout.addStretch()
 
         if self.detaillee:
-            self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/speech_bubble1.svg"), custom_command=lambda a=self.ami_id: self.lancer_conv(a))
+            self.bouton_message = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/chat_white.svg"), custom_command=lambda a=self.ami_id: self.lancer_conv(a))
 
             self.action_retirer = QAction("Retirer l'ami", self)
             self.action_retirer.triggered.connect(lambda: self.ami_remove.emit(self.ami_id))
@@ -113,7 +113,7 @@ class WidgetAmi(QWidget):
                     margin: 4px 10px;
                 }
             """)
-            self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu1.svg"))
+            self.bouton_menu = BoutonMenu(menu=self.menu, taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/menu_white.svg"))
 
 
 

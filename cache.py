@@ -88,7 +88,7 @@ class Cache:
             CREATE TABLE IF NOT EXISTS messages (
                 conv_id INTEGER NOT NULL,
                 msg_id INTEGER NOT NULL,
-                auteur_id INTEGER NOT NULL,
+                sender_id INTEGER NOT NULL,
                 contenu TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
                 lu INTEGER NOT NULL DEFAULT 0,
@@ -110,6 +110,9 @@ class Cache:
     def ami_par_id(self, id_:int) -> Ami:
         return self._amis.get(id_)
     
+    def ami_username_par_id(self, id_:int) -> str:
+        return self._amis.get(id_).username
+
 
     def blocked(self) -> list[Blocked]:
         return list(self._blocked.values())
@@ -178,15 +181,15 @@ class Cache:
             self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
         self._blocked.pop(id_, None)  
 
-    def add_msg(self, conv_id:int, msg_id:int, auteur_id:int, msg:str, timestamp:str=None):
+    def add_msg(self, conv_id:int, msg_id:int, sender_id:int, msg:str, timestamp:str=None):
         if timestamp is None:
             timestamp = str(datetime.now(timezone.utc).isoformat())
         with self._conn:
-            self._conn.execute("INSERT OR IGNORE INTO messages (conv_id, msg_id, auteur_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, 0)", (conv_id, msg_id, auteur_id, msg, timestamp))
+            self._conn.execute("INSERT OR IGNORE INTO messages (conv_id, msg_id, sender_id, contenu, timestamp, lu) VALUES (?, ?, ?, ?, ?, 0)", (conv_id, msg_id, sender_id, msg, timestamp))
 
     def lire_msgs(self, conv_id:int, limite:int=50, offset:int=0, ordre:str="asc") -> list[dict]:
         ordre_sql = "DESC" if ordre.lower() == "desc" else "ASC"
-        rows = self._conn.execute(f"SELECT msg_id, auteur_id, contenu, timestamp, lu FROM messages WHERE conv_id = ? ORDER BY timestamp {ordre_sql} LIMIT ? OFFSET ?", (conv_id, limite, offset)).fetchall()
+        rows = self._conn.execute(f"SELECT msg_id, sender_id, contenu, timestamp, lu FROM messages WHERE conv_id = ? ORDER BY timestamp {ordre_sql} LIMIT ? OFFSET ?", (conv_id, limite, offset)).fetchall()
         return [dict(r) for r in rows]
 
     def nettoyer_conv(self, conv_id:int):

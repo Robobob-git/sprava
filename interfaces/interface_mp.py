@@ -6,13 +6,15 @@ from datetime import datetime, timedelta, timezone
 from interfaces.interface_graphique import BoutonCustom, TexteEtImage
 
 class HeaderMP(QWidget):
-    def __init__(self): 
+    def __init__(self, session): 
         super().__init__()
 
-        self.layout = QHBoxLayout()
-        self.setLayout(self.layout)
+        self.cache = session.cache
+
+        self.layout = QHBoxLayout(self)
 
         self.header = None
+        self.headers = []
     
     def changer_header(self, ami_id, cache):
         ami = cache.ami_par_id(ami_id)
@@ -51,9 +53,10 @@ class MpManager(QObject):
         if ami_id not in self.mps.keys():
             self.ajouter_conv(ami_id)
         self.widget_conv.setCurrentWidget(self.mps[ami_id])
+        self.mps[ami_id].scroll_en_bas()
 
-    def ajouter_msg(self, ami_id:int, auteur:str, message:str, heure=None, pp_id=None):
-        self.mps.get(ami_id).ajouter_msg(auteur, message, heure, pp_id)
+    def ajouter_msg(self, msg_id:int, ami_id:int, sender_id:int, message:str, heure=None, pp_id=None, avec_cache=False):
+        self.mps.get(ami_id).ajouter_msg(msg_id, sender_id, message, heure, pp_id, avec_cache)
 
 class MessageWidget(QWidget):
     def __init__(self, auteur:str, message:str, heure:str = None, pp_id=None, montrer_header=True):
@@ -133,15 +136,18 @@ class InterfaceMP(QWidget):
         self.session = session
 
         self.cache = session.cache
+        self.user_id = self.session.user_id
+        self.user_username = self.session.user_info['username']
         self.ami = self.cache.ami_par_id(ami_id)
         self.messages = []
+        self.requettes_manager = self.session.requettes_manager
 
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         self._faire_ui()
-        self.charger_tout()
+        self.charger_cache()
     
     def _faire_ui(self):
         '''self.windget_total.setContentsMargins(0, 0, 0, 0)
@@ -215,28 +221,71 @@ class InterfaceMP(QWidget):
         self.layout.addWidget(self.zone_scroll)
         self.layout.addWidget(self.ecrire_widget)
     
-    def charger_tout(self):
+    def charger_cache(self):
         print(f"\nCONV ID : {self.conv_id}")
         messages = self.cache.lire_msgs(self.conv_id)
         print(f'messages : {messages}')
 
-        for msg in messages:
-            id_ = msg["auteur_id"]
-            if id_ == self.session.user_id:
-                auteur = self.session.user_info["username"]
-            else:
-                auteur = self.cache.ami_par_id(id_).username
+        self.ajouter_messages(messages, True, False)
+        self.comparer_serv(messages)
 
-            self.ajouter_msg(auteur=auteur, message=msg['contenu'], heure=msg["timestamp"])
 
-    def ajouter_msg(self, auteur:str, message:str, heure=None, pp_id=None):
-        message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
+
+    def comparer_serv(self, cache_messages:list[dict]):
+        def succes(rep):
+            print(f'\nMSGS SERVEUR : {rep.get("messages")}')
+            serv_messages = rep.get("messages")[::-1]   # Inverse pour avoir du plus vieux au plus récent
+            serv_messages_ids = [msg["id"] for msg in serv_messages]
+            
+            cache_messages_ids = []
+            if cache_messages != []:
+                cache_messages_ids = [msg["msg_id"] for msg in cache_messages]
+
+            if serv_messages_ids != cache_messages_ids:
+                self.cache.nettoyer_conv(self.conv_id)
+                self.clear_messages()
+                print('AGAGAGGAGAGGAGAGGAGAGAG')
+                self.ajouter_messages(serv_messages, False, True)
+        def erreur(rep):
+            print('Erreur lors de la comparaison avec les messages serveur')
+
+        self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.obtenir_msgs(self.conv_id), func_succes=succes, func_erreur=erreur)
+    
+    def ajouter_msg(self, msg_id:int, sender_id:int, message:str, heure=None, pp_id=None, avec_cache=False):
+        if sender_id == self.user_id:
+            auteur = self.user_username
+        else:
+            auteur = self.ami.username
         
+        if avec_cache:
+            self.cache.add_msg(conv_id=self.conv_id, msg_id=msg_id, sender_id=sender_id, msg=message)
+        
+        message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
         self.conv_layout.addWidget(message_widget)
         '''self.zone_scroll.ensureWidgetVisible(message_widget)    # "Attend" que la taille du widget sois calculée poru bien scroll au plus bas '''
         self.messages.append(message_widget)
         
         self.scroll_en_bas()
+    
+    def ajouter_messages(self, messages:list[dict], du_cache:bool=False, avec_cache:bool = False):
+        for msg in messages:
+            if du_cache:
+                self.ajouter_msg(msg_id=msg['msg_id'], sender_id=msg['sender_id'], message=msg['contenu'], heure=msg['timestamp'])
+            else:
+                self.ajouter_msg(msg_id=msg['id'], sender_id=msg['sender_id'], message=msg['content'], heure=msg['created_at'])
+           
+            if avec_cache:
+                if du_cache:
+                    self.cache.add_msg(self.conv_id, msg["msg_id"], msg['sender_id'], msg['contenu'], msg['timestamp'])
+                else:
+                    self.cache.add_msg(self.conv_id, msg["id"], msg['sender_id'], msg['content'], msg['created_at'])
+
+    def clear_messages(self):
+        while self.conv_layout.count():
+            item = self.conv_layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
 
     def scroll_en_bas(self):
         scrollbar = self.zone_scroll.verticalScrollBar()
