@@ -52,7 +52,7 @@ def download_pp(pp_id:str, old_pp_id:str, tailles, labels, session):
 
         changer_pp(tailles=tailles, labels=labels, path=pp_path)
     def erreur():
-        print('Erreur lors du téléchargement de la pp')
+        pass
 
     session.requettes_manager.executer(func=lambda : session.gestionnaire_media.download_pp(pp_id, pp_path), func_succes=succes, func_erreur=erreur)
 

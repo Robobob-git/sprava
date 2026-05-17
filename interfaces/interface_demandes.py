@@ -1,6 +1,5 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel
 from dataclasses import dataclass
 
 from interfaces.interface_graphique import ListeElements, BoutonCustom
@@ -14,13 +13,11 @@ class Demande:
 class InterfaceDemandesRecues(QWidget):
     ami_accept = pyqtSignal(int)    # On le crée ici parce que les pyqtSignal sont bizzares
 
-    def __init__(self, session, test):
+    def __init__(self, session):
         super().__init__()
 
         self.session = session
-        self.test = test
-        if not self.test:
-            self.requettes_manager = session.requettes_manager
+        self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -28,8 +25,7 @@ class InterfaceDemandesRecues(QWidget):
         self.layout.addWidget(self.widget_recues)
 
         self.demandes:list[int] = []
-        if not self.test:
-            self._trouver_demandes_recues()
+        self._trouver_demandes_recues()
 
         self._faire_ui()
 
@@ -53,25 +49,19 @@ class InterfaceDemandesRecues(QWidget):
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_noms(ids=self.demandes), func_succes=succes)
 
     def accepter_demande(self, ami_id:int, ami_nom:str):
-        if self.test:
-            return
-        
         def succes(rep):
             self.ami_accept.emit(rep.get('new_friend_id'))
             self.retirer_demande(ami_id=ami_id)
         def erreur(e):
-            print(f"erreur lors de l'acceptation de l'ami {ami_nom} : {e}")
+            pass
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.accepter_demande_ami(nom_ami=ami_nom, ami_id=ami_id), func_succes=succes, func_erreur=erreur)
 
     def refuser_demande(self, ami_id:int):
-        if self.test:
-            return
-        
         def succes(rep):
             self.retirer_demande(ami_id=ami_id)
         def erreur(e):
-            print(f"erreur lors de la rejection de la demande de l'ami avec l'id : {ami_id} : {e}")
+            pass
         
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.refuser_demande_ami(ami_id=ami_id), func_succes=succes, func_erreur=erreur)
 
@@ -92,14 +82,12 @@ class InterfaceDemandesRecues(QWidget):
         self.widget_recues.retirer_item(data=ami_id)
 
 class InterfaceDemandesEnvoyees(QWidget):
-    def __init__(self, session, test):
+    def __init__(self, session):
         super().__init__()
 
         self.session = session
-        self.test = test
 
-        if not self.test:
-            self.requettes_manager = session.requettes_manager
+        self.requettes_manager = session.requettes_manager
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -107,8 +95,7 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.layout.addWidget(self.widget_envoyees)
 
         self.demandes:list[int] = []
-        if not self.test:
-            self._trouver_demandes_envoyees()
+        self._trouver_demandes_envoyees()
 
         self._faire_ui()
     
@@ -130,13 +117,10 @@ class InterfaceDemandesEnvoyees(QWidget):
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_noms(ids=self.demandes), func_succes=succes)
  
     def annuler_demande(self, ami_id:int):
-        if self.test:
-            return
-        
         def succes(rep):
             self.retirer_demande(ami_id=ami_id)
         def erreur(e):
-            print(f"erreur lors de l'annulation de la demande pour l'ami avec l'id {ami_id} : {e}")
+            pass
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.annuler_demande_ami(ami_id=ami_id), func_succes=succes, func_erreur=erreur)
 

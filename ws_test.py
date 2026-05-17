@@ -1,4 +1,4 @@
-import socketio, threading, time
+import socketio, threading
 from typing import Callable
 
 class WSClient:
@@ -19,30 +19,7 @@ class WSClient:
 
         @self.sio.on("disconnect")
         def _():
-            print("DECONNEXION")
             self._connected.clear()
-
-
-
-        @self.sio.on("connect_error")
-        def _(data):
-            print(f"WS CONNECT_ERROR: {data}")
-
-        @self.sio.on("reconnect_attempt")
-        def _(attempt):
-            print(f"WS RECONNECT_ATTEMPT: {attempt}")
-
-        @self.sio.on("reconnect")
-        def _(attempt):
-            print(f"WS RECONNECTED: {attempt}")
-
-        @self.sio.on("reconnect_error")
-        def _(data):
-            print(f"WS RECONNECT_ERROR: {data}")
-
-        @self.sio.on("reconnect_failed")
-        def _():
-            print("WS RECONNECT_FAILED")    
 
 
 
@@ -62,8 +39,6 @@ class WSClient:
 
         @self.sio.on("new_message")
         def _(data):
-            # Option: persister dans cache.messages
-            print('UN MESSAGE RECU')
             self.on_ui("new_message", data)
             # data du type : {'conversation_id': 1, 'message_id': 74, 'sender_id': 2, 'content': 'hj', 'created_at': '2026-04-23T00:40:01.122822', 'media_ids': []}
 
@@ -73,42 +48,34 @@ class WSClient:
 
         @self.sio.on("new_friend_request")
         def _(data):
-            print("NOUVELLE DEMANDE RECUE")
             self.on_ui("new_friend_request", data)
 
         @self.sio.on("friend_request_accepted")
         def _(data):
-            print("UNE DEMANDE A ÉTÉ ACCEPTÉE")
             self.on_ui("friend_request_accepted", data)
 
         @self.sio.on("friend_request_rejected")
         def _(data):
-            print("UNE DEMANDE A ÉTÉ REFUSÉE")
             self.on_ui("friend_request_rejected", data)
 
         @self.sio.on("friend_request_canceled")
         def _(data):
-            print("QUELQU'UN A ANNULÉ UNE DEMANDE ENVERS MOI")
             self.on_ui("friend_request_canceled", data)
 
         @self.sio.on("friend_removed")
         def _(data):
-            print("FRIEND REMOVED ME")
             self.on_ui("friend_removed", data)
 
         @self.sio.on("user_updated")
         def _(data):
-            print("USER UPDATED")
             self.on_ui("user_updated", data)
 
         @self.sio.on("user_blocked")
         def _(data):
-            print("USER BLOCKED ME")
             self.on_ui("user_blocked", data)
 
         @self.sio.on("user_unblocked")
         def _(data):
-            print("USER UNBLOCKED ME")
             self.on_ui("user_unblocked", data)
 
     def connect(self, timeout=10):

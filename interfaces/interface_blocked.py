@@ -1,10 +1,8 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QLineEdit
 
 from amis import WidgetBlocked
-from autre_fonctions import obtenir_vrai_chemin
-from interfaces.interface_graphique import GroupeBoutons, BoutonCustom, ListeElements, TexteEtImage
+from interfaces.interface_graphique import ListeElements
 
 class InterfaceBlocked(QWidget):
     ami_unblock = pyqtSignal(int)

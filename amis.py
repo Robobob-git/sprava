@@ -1,6 +1,6 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QPoint
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
+from PyQt6.QtCore import pyqtSignal, QPoint
+from PyQt6.QtWidgets import QHBoxLayout, QWidget, QLabel, QMenu
+from PyQt6.QtGui import QAction
 
 from interfaces.interface_graphique import BoutonCustom, BoutonMenu
 from autre_fonctions import obtenir_vrai_chemin, obtenir_pp_chemin, download_pp, changer_pp
@@ -24,12 +24,10 @@ class WidgetBlocked(QWidget):
 
             self.setLayout(self.layout)
         else:
-            print(f'{self.blocked_id} introuvable dans {self.cache.blocked_ids()}')
+            pass
         
     def _construire_widget(self):
         pp = QLabel()
-        '''pp.setPixmap(ami.pp)
-        avatar_label.setFixedSize(40, 40)'''
         self.layout.addWidget(pp)
 
         nom = QLabel(self.blocked.username)
@@ -62,7 +60,7 @@ class WidgetAmi(QWidget):
 
             self.setLayout(self.layout)
         else:
-            print(f'{self.ami_id} introuvable dans {self.cache.amis_ids()}')
+            pass
 
     def _construire_widget(self):
         pp = QLabel()
@@ -75,11 +73,6 @@ class WidgetAmi(QWidget):
 
         nom = QLabel(self.ami.username)
         self.layout.addWidget(nom)
-
-        '''status = QLabel(self.ami.status)
-        couleur = "#43b581" if self.ami.status == "online" else "#747f8d"
-        status.setStyleSheet(f"color: {couleur}; font-size: 9pt;")
-        info_layout.addWidget(status)'''
 
         self.layout.addStretch()
 
@@ -127,11 +120,8 @@ class WidgetAmi(QWidget):
 
 
     def afficher_menu(self):
-        print('dfghjklm')
         bouton_pos = self.bouton_menu.mapToGlobal(QPoint(0, self.bouton_menu.height() + 5))
-        print(f"bouton_pos : {bouton_pos}")
         self.menu.popup(bouton_pos)
     
     def lancer_conv(self, ami_id:int):
-        print(f'bonjour amongus : {ami_id}')
         self.start_conv.emit(ami_id)

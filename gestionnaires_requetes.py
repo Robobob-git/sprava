@@ -25,7 +25,6 @@ class GestionRequetes:
             rep = requests.put(f"{LIEN_API}{url}", headers=headers, json=body)
 
         else:
-            print(f"Erreur, ce type de requete n'est pas renseigné : {type_de_r}")
             return
 
 
@@ -39,11 +38,11 @@ class GestionRequetes:
             else:
                 return rep.json()
         elif rep.status_code == 401:
-            print(f"CODE : {rep.status_code}, Token invalide ou expiré\net voici rep : {rep.json()}")
+            pass
         elif rep.status_code == 500:
-            print(f"CODE : {rep.status_code}, Erreur interne du serveur")
+            pass
         else:
-            print("Erreur :", rep.status_code, rep.text)
+            pass
         return
 
 class GestionUtilisateurs:
@@ -62,7 +61,6 @@ class GestionUtilisateurs:
     
     def obtenir_noms(self, ids:list[int]) -> list[str]:
         if ids == []:
-            print("La liste d'ids est vide pour obtenir_noms")
             return []
         ids_amis = self.obtenir_infos_multiples(ids=ids)
         return [user.get('username') for user in ids_amis]
@@ -73,7 +71,6 @@ class GestionUtilisateurs:
 
     def obtenir_infos_multiples(self, ids:list[int]) -> list:
         if ids == []:
-            print("La liste d'ids est vide pour obtenir_infos")
             return
 
         body = {'user_id' : ids}
@@ -102,7 +99,6 @@ class GestionUtilisateurs:
         with open(pp_path, "rb") as image_file:
             files = {"file": image_file}
             rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_avatar", type_de_r='post', files=files)
-        print(rep)
         return rep
 
 class GestionAmis:
@@ -114,7 +110,6 @@ class GestionAmis:
     
     def obtenir_amis(self, toutes_infos:bool=False, seulement_ids:bool=False, seulement_noms:bool=False) -> list:
         if not toutes_infos and not seulement_ids and not seulement_noms:
-            print("Manque un renseignement sur l'appel obtenir_amis")
             return
         
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/friends", type_de_r='get')
@@ -127,29 +122,24 @@ class GestionAmis:
             return self.gestion_utilisateurs.obtenir_infos_multiples(ids=friends_ids)
 
         else:
-            print("Informations en confliction sur l'appel obtenir_amis")
             return
 
     def demander_en_ami(self, nom_ami:str=None, ami_id:int=None):
         if not nom_ami and not ami_id:
-            print("Veuillez renseigner le nom ou l'id le l'ami à ajouter")
             return
         if nom_ami:
             ami_id = self.gestion_utilisateurs.obtenir_id(nom_ami)
 
         body = {"receiver_id" : ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/send_friend_request", type_de_r='post', body=body)
-        print(rep)
         return rep
     
     def obtenir_demandes_amis_recues(self):
         rep = self.gestionnaire_de_requetes.faire_requete(url="/me/friend_requests", type_de_r='get')
-        print(rep)
         return rep
 
     def obtenir_demandes_amis_envoyees(self):
         rep = self.gestionnaire_de_requetes.faire_requete(url='/me/sent_friend_requests', type_de_r='get')
-        print(rep)
         return rep
 
     def accepter_demande_ami(self, nom_ami:str=None, ami_id:int=None):
@@ -160,7 +150,6 @@ class GestionAmis:
 
         body = {"sender_id": ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/accept_friend_request", type_de_r='post',body=body)
-        print(rep)
         return rep
 
     def annuler_demande_ami(self, ami_id:int):
@@ -181,20 +170,17 @@ class GestionAmis:
 
         body = {'friend_id': ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/remove_friend", type_de_r='delete', body=body)
-        print(rep)
         return rep
     
 
     def bloquer_ami(self, ami_id):
         body = {"friend_id" : ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/block_user", body=body, type_de_r='post')
-        print(f'on bloque {ami_id} : {rep}')
         return rep
     
     def debloquer_ami(self, ami_id):
         body = {"friend_id" : ami_id}
         rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/unblock_user", body=body, type_de_r='delete')
-        print(f'on débloque {ami_id} : {rep}')
         return rep
     
     def obtenir_blocked_ids(self) -> list[int]:
@@ -211,7 +197,6 @@ class GestionConnexions:
     def inscription(self, pseudo:str, mail:str, mdp:str, date_naissance:str):
         body = {"username": pseudo, "mail": mail, "password": mdp, "date_of_birth": date_naissance}
         rep = self.requetur_sans_token.faire_requete(url=f"/signup", type_de_r='post',body=body)
-        print(rep)
         return rep
 
     
@@ -220,10 +205,8 @@ class GestionConnexions:
         rep = self.requetur_sans_token.faire_requete(url=f"/login", type_de_r='post',body=body)
         
         if rep.get('status_code') == 401:
-            print(rep)
             return
         else:
-            print(rep)
             return rep
 
 class GestionConversations:

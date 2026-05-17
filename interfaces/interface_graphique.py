@@ -1,10 +1,6 @@
-import sys
-import os
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton, QStackedWidget
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
-
-from autre_fonctions import obtenir_vrai_chemin
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QLabel, QMenu, QSizePolicy, QListWidget, QListWidgetItem, QButtonGroup, QToolButton, QStackedWidget
+from PyQt6.QtGui import QPixmap, QIcon, QCursor
 
 class FenetrePrincipale(QMainWindow):
     def __init__(self):
@@ -183,19 +179,13 @@ class TexteEtImage(QWidget):
 
 
 class ListeElements(QListWidget):
-    def __init__(self, parent=None, horizontal:bool=False, custom_command=None):
+    def __init__(self, parent=None, custom_command=None):
         super().__init__(parent)
 
         self._items = {}  # {data: QListWidgetItem}
 
         self.setSpacing(2)
         self.setFrameShape(QListWidget.Shape.NoFrame)
-
-        if horizontal:
-            self.setFlow(QListView.Flow.LeftToRight)
-            self.setWrapping(False)  # pas de retour à la ligne automatique
-            self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-            self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.setStyleSheet("""
             QListWidget {
@@ -228,7 +218,6 @@ class ListeElements(QListWidget):
             self._items[data] = item
     
     def retirer_item(self, data):
-        print(self._items, ' ', data)
         if hasattr(data, "id"):
             item = self._items.pop(data.id, None)
         else:
@@ -310,7 +299,7 @@ class LigneCategorie(QWidget):
                 categorie.show()
                 self.categorie_actuelle = categorie
             else:
-                print(f"Catégorie {categorie} innexistante")
+                pass
 
 def main():
     pass

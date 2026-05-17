@@ -6,12 +6,6 @@ from ws_test import WSClient
 
 
 class WSBridge(QObject):
-    """Thread-safe Qt bridge between WSClient and the UI.
-
-    The socket.io client runs in a worker thread.
-    UI notifications go through Qt signals.
-    """
-
     connected_changed = pyqtSignal(bool)
     friend_status_changed = pyqtSignal(int, bool, dict)
     online_friends_received = pyqtSignal(list)
@@ -38,7 +32,6 @@ class WSBridge(QObject):
         self._lock = threading.Lock()
 
     def start(self, token: str, timeout: int = 10) -> None:
-        """Initialize and connect websocket in a background thread."""
         with self._lock:
             if self._client is not None and self._client.sio.connected:  #Si client déjà connecté
                 return
@@ -72,7 +65,6 @@ class WSBridge(QObject):
             self.connected_changed.emit(False)
 
     def stop(self) -> None:
-        """Disconnect websocket cleanly."""
         with self._lock:
             if self._client is None:
                 return

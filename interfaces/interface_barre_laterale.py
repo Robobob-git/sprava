@@ -1,9 +1,8 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
-from dataclasses import dataclass
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel
+from PyQt6.QtGui import QPixmap
 
-from interfaces.interface_graphique import ListeElements, BoutonCustom
+from interfaces.interface_graphique import ListeElements
 from autre_fonctions import obtenir_vrai_chemin
 from amis import WidgetAmi
 

@@ -1,11 +1,10 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QFileInfo, QRect
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget, QFileDialog, QFrame
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QImageReader, QImage, QPainter, QPainterPath
-from dataclasses import dataclass
+from PyQt6.QtCore import Qt, pyqtSignal, QFileInfo, QRect
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLineEdit, QLabel, QMessageBox, QStackedWidget, QFileDialog, QFrame
+from PyQt6.QtGui import QImageReader, QImage, QPainter, QPainterPath
 from pathlib import Path
 
-from interfaces.interface_graphique import ListeElements, BoutonCustom
-from autre_fonctions import obtenir_vrai_chemin, obtenir_user_chemin, obtenir_pp_chemin, changer_pp
+from interfaces.interface_graphique import BoutonCustom
+from autre_fonctions import obtenir_user_chemin, obtenir_pp_chemin, changer_pp
 
 def cercler(path_in: str, path_out: str, size: int = 256):
     img = QImage(path_in)
@@ -218,7 +217,6 @@ class InterfacePara(QWidget):
             if path_temp.is_file():
                 path_temp.unlink()
         def erreur(rep):
-            print('Erreur lors du changement de pp')
             changer_pp(tailles=50, labels=self.pp, default=True)
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_pp(pp_path), func_succes=succes, func_erreur=erreur)
@@ -242,7 +240,7 @@ class InterfacePara(QWidget):
             self.session.user_info["username"] = nom
             self.nom_ligne.mode_base()
         def erreur(e):
-            print(f"Erreur lors du changement de nom")
+            pass
         
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_nom(nom), func_succes=succes, func_erreur=erreur)
     
@@ -263,7 +261,7 @@ class InterfacePara(QWidget):
             self.session.user_info["mail"] = mail
             self.mail_ligne.mode_base()
         def erreur(e):
-            print(f"Erreur lors du changement de mail")
+            pass
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_mail(mail), func_succes=succes, func_erreur=erreur)
     
@@ -274,10 +272,9 @@ class InterfacePara(QWidget):
             QMessageBox.information(self, "INFO", "Mot de passe changée avec succès")
             
             self.mdp_edit.setText("")
-            print(f'user info : {self.user_info}')
             self.session.user_info["password"] = mdp
             self.mdp_ligne.mode_base()
         def erreur(e):
-            print(f"Erreur lors du changement de mdp")
+            pass
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.changer_mdp(mdp), func_succes=succes, func_erreur=erreur)

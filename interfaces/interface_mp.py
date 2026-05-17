@@ -1,11 +1,10 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QObject
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import Qt, pyqtSignal, QObject
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QLineEdit, QLabel, QScrollArea, QStackedWidget
 from datetime import datetime, timedelta, timezone
 
-from autre_fonctions import obtenir_pp_chemin, download_pp, changer_pp
+from autre_fonctions import obtenir_pp_chemin, changer_pp
 
-from interfaces.interface_graphique import BoutonCustom, TexteEtImage
+from interfaces.interface_graphique import BoutonCustom
 
 class HeaderMP(QWidget):
     def __init__(self, ami_id:int, session): 
@@ -70,7 +69,6 @@ class MpManager(QObject):
 
     def supprimer_conv(self, ami_id:int):
         if ami_id not in self.mps.keys():
-            print(f"Il n'y a pas de conv avec l'ami d'id : {ami_id}")
             return
         
         widget = self.headers[ami_id]
@@ -130,8 +128,6 @@ class MessageWidget(QWidget):
         """)
     
     def _faire_ui(self):
-        '''self.layout.setContentsMargins(10, 4, 10, 4)
-        self.layout.setSpacing(10)'''
         if self.montrer_header:
             self.layout.addSpacing(50)
             self.pp = QLabel()
@@ -142,7 +138,6 @@ class MessageWidget(QWidget):
             self.layout.addSpacing(50)
 
         msg_layout = QVBoxLayout()
-        """msg_layout.setSpacing(2)"""
         if self.montrer_header:
             header_layout = QHBoxLayout()
             msg_layout.addLayout(header_layout)
@@ -157,7 +152,6 @@ class MessageWidget(QWidget):
             header_layout.addWidget(heure_label)
         
         msg_label = QLabel(self.message)
-        '''msg_label.setStyleSheet("color: #dcddde; font-size: 13px; line-height: 1.4;")'''
         msg_layout.addWidget(msg_label)
 
         self.layout.addLayout(msg_layout)
@@ -289,7 +283,6 @@ class InterfaceMP(QWidget):
 
     def comparer_serv(self, cache_messages:list[dict]):
         def succes(rep):
-            print(f'\nMSGS SERVEUR : {rep.get("messages")}')
             serv_messages = rep.get("messages")[::-1]   # Inverse pour avoir du plus vieux au plus récent
             serv_messages_ids = [msg["id"] for msg in serv_messages]
             
@@ -300,10 +293,9 @@ class InterfaceMP(QWidget):
             if serv_messages_ids != cache_messages_ids:
                 self.cache.nettoyer_conv(self.conv_id)
                 self.clear_messages()
-                print('AGAGAGGAGAGGAGAGGAGAGAG')
                 self.ajouter_messages(serv_messages, False, True)
         def erreur(rep):
-            print('Erreur lors de la comparaison avec les messages serveur')
+            pass
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.obtenir_msgs(self.conv_id), func_succes=succes, func_erreur=erreur)
     
@@ -318,7 +310,6 @@ class InterfaceMP(QWidget):
 
         message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_path=obtenir_pp_chemin(self.user_id, pp_id), montrer_header=True)
         self.conv_layout.insertWidget(1, message_widget)
-        '''self.zone_scroll.ensureWidgetVisible(message_widget)    # "Attend" que la taille du widget sois calculée poru bien scroll au plus bas '''
         self.messages.append(message_widget)
         
         self.scroll_en_bas()

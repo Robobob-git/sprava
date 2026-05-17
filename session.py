@@ -4,17 +4,12 @@ from ws_bridge import WSBridge
 
 
 class Session:
-    def __init__(self, user_info: dict, token: str, requettes_manager, test: bool = False):
+    def __init__(self, user_info: dict, token: str, requettes_manager):
         self.token = token
         self.user_info = user_info
         self.user_id = user_info.get("user_id")
-        self.test = test
 
         self.cache = Cache(self.user_id)
-
-
-        if test:
-            return
 
         self.ws_bridge = WSBridge(session=self)
         self.ws_bridge.start(token=self.token, timeout=10)

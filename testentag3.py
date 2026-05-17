@@ -1,1 +1,0 @@
-print(("amogus.png").split('.png')[0])

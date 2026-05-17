@@ -1,6 +1,6 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QDateEdit, QCalendarWidget
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QGridLayout, QWidget, QLineEdit, QLabel, QMessageBox, QDateEdit, QCalendarWidget
+from PyQt6.QtGui import QFont
 
 from interfaces.interface_graphique import BoutonCustom
 from gestionnaire_threaded import RequettesManager
@@ -126,29 +126,23 @@ class InterfaceLogin(QWidget):
 
     def lancer_connexion(self):
         def succes(rep):
-            print("AAAAAAAAAAAAAAAAAA")
             if rep:
-                print(f'rep : {rep}')
                 self.token = rep.pop('api_token')
                 rep.pop('status_code')
                 self.user_info = rep
                 self.connexion_confirmee()
             else:
-                print(f"Connexion échouée")
+                pass
         def erreur(e):
-            print(f"Erreur lors de la connexion: {e}")
+            pass
 
 
         if self.mail_widget_connexion.text() != "" and self.mdp_widget_connexion.text() != "":
-            if self.mail_widget_connexion.text() == "test" and self.mdp_widget_connexion.text() == "test":
-                self.connexion_confirmee_test()
-                return
-            
             mail=self.mail_widget_connexion.text()
             mdp=self.mdp_widget_connexion.text()
             self.requettes_manager.executer(func=lambda : self.gestionnaire_connexions.connexion(mail, mdp), func_succes=succes, func_erreur=erreur)
         else:
-            print(f'Veuillez renseigner le mail et le mot de passe')
+            pass
 
     
     def lancer_inscription(self):
@@ -159,9 +153,9 @@ class InterfaceLogin(QWidget):
                 self.user_info = rep
                 self.inscription_confirmee()
             else:
-                print(f"Inscription échouée")
+                pass
         def erreur(e):
-            print(f"Erreur lors de la connexion: {e}")
+            pass
 
 
         if self.pseudo_widget.text() != "" and self.mail_widget_inscription.text() != "" and self.mdp_widget_inscription.text() != "" and self.confirmer_mdp.text() != "" and self.date_naiss_widget.date().toString("yyyy-MM-dd") != "":
@@ -173,29 +167,19 @@ class InterfaceLogin(QWidget):
                 self.requettes_manager.executer(func=lambda : self.gestionnaire_connexions.inscription(pseudo, mail, mdp, date_naissance), func_succes=succes, func_erreur=erreur) 
             
             else:
-                print("Les mots de passe ne correspondent pas")
+                QMessageBox.warning(self, "Erreur", "Les Mots de passe ne correspondent pas")
         else:
-            print(f'Veuillez renseigner correctement tous les champs')
+            QMessageBox.warning(self, "Erreur", "Veuillez renseigner tous les champs")
 
     
     def connexion_confirmee(self):
-        print(f"token : {self.token}")
-        print("Connecté avec succès")
+
         self.session = Session(user_info=self.user_info, token=self.token, requettes_manager=self.requettes_manager)
         self.interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session)
         self.interface_messagerie.deconnexion.connect(self.deconnexion)
         self.fenetre_principale.changer_interface(self.interface_messagerie)
 
-    def connexion_confirmee_test(self):
-        print("MODE TEST")
-        user_info = {'user_id':999, 'username':'test', 'mail':'test@mail.com', 'phone':None, 'date_of_birth':'2000-01-01'}
-        self.session = Session(user_info=user_info, token="", requettes_manager="", test=True)
-        self.interface_messagerie = InterfaceMessagerie(fenetre_principale=self.fenetre_principale, session=self.session, test=True)
-        self.interface_messagerie.deconnexion.connect(self.deconnexion)
-        self.fenetre_principale.changer_interface(self.interface_messagerie)
-
     def inscription_confirmee(self):
-        print(f"token : {self.token}")
         self.changer_moyen_connexion()
         QMessageBox.information(self, "INFO", "Compte crée avec succès")
 

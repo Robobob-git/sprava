@@ -1,5 +1,4 @@
 import sqlite3
-from pathlib import Path
 from datetime import datetime, timezone
 
 from autre_fonctions import obtenir_user_chemin
@@ -134,7 +133,6 @@ class Cache:
     # Écriture (SQLite + dict)
 
     def ecrire_amis(self, amis: list[Ami]):
-        """Sync complète : remplace tout le cache. Met à jour TTL."""
         with self._conn:
             self._conn.execute("DELETE FROM amis")
             self._conn.executemany(
@@ -160,7 +158,7 @@ class Cache:
         self._amis[ami.id] = ami
 
     def invalider_ami(self, id_:int):
-        """Retire un ami du cache (ex: remove_friend)."""
+        """Retire un ami du cache"""
         with self._conn:
             self._conn.execute("DELETE FROM amis WHERE id = ?", (id_,))
         self._amis.pop(id_, None)
@@ -168,7 +166,6 @@ class Cache:
     def block(self, id_:int):
         ami = self.ami_par_id(id_)
         if not ami:
-            print(f"Impossible de bloquer {id_} : ami introuvable dans le cache")
             return
 
         blocked = Blocked(id=ami.id, username=ami.username, pp_id=ami.pp_id)
@@ -177,7 +174,6 @@ class Cache:
         self._blocked[blocked.id] = blocked
 
     def unblock(self, id_:int):
-        print(f"id_ : {id_}, et son type : {type(id_)}")
         with self._conn:
             self._conn.execute("DELETE FROM blocked WHERE id = ?", (id_,))
         self._blocked.pop(id_, None)  
@@ -231,8 +227,6 @@ class Cache:
     
     def _lire_blocked_sqlite(self) -> dict[int, Blocked]:
         rows = self._conn.execute("SELECT id, username, pp_id FROM blocked").fetchall()
-        for r in rows:
-            print(f'r : {r["id"]}\ndict(r) : {dict(r)}')
         return {r["id"]: Blocked(**dict(r)) for r in rows}
 
     # Cycle de vie

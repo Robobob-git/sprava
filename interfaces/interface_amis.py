@@ -1,6 +1,5 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QLineEdit
 
 from amis import WidgetAmi
 from autre_fonctions import obtenir_vrai_chemin
@@ -30,18 +29,6 @@ class InterfaceAmis(QWidget):
         self.rechercher_ami.setPlaceholderText("Rechercher un ami...")
         self.rechercher_ami.textChanged.connect(self.filtrer)
         self.layout.addWidget(self.rechercher_ami)
-
-
-        '''self.liste_amis = QScrollArea()
-        contenu_liste = QWidget()
-        self.liste_amis.setWidgetResizable(True)
-        self.liste_amis.setFrameShape(QScrollArea.Shape.NoFrame)
-        layout_contenu = QVBoxLayout(contenu_liste)
-        for ami in self.amis:
-            layout_contenu.addWidget(WidgetAmi(ami=ami, detaillee=True))
-
-        self.liste_amis.setWidget(contenu_liste)
-        self.layout.addWidget(self.liste_amis)'''
 
         self.liste_amis = ListeElements()
         for ami_id in self.cache.amis_ids():

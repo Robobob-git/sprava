@@ -1,17 +1,16 @@
-from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QLabel, QMessageBox
+from PyQt6.QtGui import QFont
 
 from interfaces.interface_graphique import BoutonCustom
 
 class InterfaceAjouterAmi(QWidget):
     nouv_demande = pyqtSignal(int, str)
 
-    def __init__(self, session, test:bool=False):
+    def __init__(self, session):
         super().__init__()
 
         self.session = session
-        self.test = test
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(20, 20, 20, 20)  # Marges autour du contenu
@@ -87,10 +86,7 @@ class InterfaceAjouterAmi(QWidget):
         # Ajouter un stretch pour pousser le contenu vers le haut
         self.layout.addStretch()
 
-    def envoyer_demande(self):
-        if self.test:
-            return
-        
+    def envoyer_demande(self):   
         def succes1(id_):  # Ici on a direct l'id en int
             if not id_:
                 return
@@ -103,11 +99,12 @@ class InterfaceAjouterAmi(QWidget):
                 if rep2.get("status_code") == 200:
                     QMessageBox.information(self, "INFO", "Demande d'ami envoyée")
                     self.nouv_demande.emit(id_, nom)
+                else:
+                    QMessageBox.warning(self, "Erreur", "Déjà amis, ou utilisateur introuvable")
 
             self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(ami_id=id_), func_succes=succes2, func_erreur=erreur)
         def erreur(e):
-            print(f"Erreur lors de l'envoi de la demande : {e}")
-            return
+            pass
 
         nom = self.recherche_qqn.text()
         self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_utilisateurs.obtenir_id(nom), func_succes=succes1, func_erreur=erreur)
