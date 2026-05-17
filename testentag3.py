@@ -1,2 +1,1 @@
-from datetime import datetime
-print(type(datetime.now().astimezone()))
+print(("amogus.png").split('.png')[0])

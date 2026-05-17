@@ -12,7 +12,8 @@ class FenetrePrincipale(QMainWindow):
 
         # Configuration de la fenêtre
         self.setWindowTitle("Sprava")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1100, 900)
+        self.setMinimumSize(800, 900)
 
         # Création du widget principal qui va tout contenir
         self.central_widget = QWidget()
@@ -250,6 +251,7 @@ class GroupeBoutons(QWidget):
         self.group.setExclusive(True)
 
         for btn in boutons:
+            self.group.addButton(btn)
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.layout.addWidget(btn)

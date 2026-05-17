@@ -6,7 +6,7 @@ class GestionRequetes:
     def __init__(self, token=None):
         self.token = token
 
-    def faire_requete(self, url:str, type_de_r:str, body:dict=None, files=None):
+    def faire_requete(self, url:str, type_de_r:str, body:dict=None, files=None, path:str=None):
         if self.token is not None:
             headers = {"Authorization": f"{self.token}"}
         else:
@@ -30,7 +30,14 @@ class GestionRequetes:
 
 
         if rep.status_code == 200:
-            return rep.json()
+            if path:
+                with open(path, "wb") as f:
+                    for chunk in rep.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                return True
+            else:
+                return rep.json()
         elif rep.status_code == 401:
             print(f"CODE : {rep.status_code}, Token invalide ou expiré\net voici rep : {rep.json()}")
         elif rep.status_code == 500:
@@ -96,7 +103,7 @@ class GestionUtilisateurs:
             files = {"file": image_file}
             rep = self.gestionnaire_de_requetes.faire_requete(url=f"/me/change_avatar", type_de_r='post', files=files)
         print(rep)
-        return
+        return rep
 
 class GestionAmis:
     def __init__(self, token):
@@ -260,4 +267,10 @@ class GestionConversations:
 
 class GestionMedia:
     def __init__(self, token:str):
+        self.token = token
+
         self.gestionnaire_de_requetes = GestionRequetes(token=self.token)
+
+    def download_pp(self, pp_id:str, pp_path:str):
+        rep = self.gestionnaire_de_requetes.faire_requete(url=f"/media/avatar?avatar_id={pp_id}", type_de_r='get', path=pp_path)
+        return rep  # Ici on a fait en sorte que rep soit True ou None

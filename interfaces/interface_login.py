@@ -99,6 +99,13 @@ class InterfaceLogin(QWidget):
         self.central_layout = QVBoxLayout()
         self.central.setLayout(self.central_layout)
 
+        titre = QLabel("Sprava")
+        font_titre = QFont("Georgia", 36, QFont.Weight.Bold)
+        titre.setFont(font_titre)
+        titre.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.central_layout.addWidget(titre)
+
         self.central_layout.addWidget(self.connexion_widget)
         self.central_layout.addWidget(self.inscription_widget)
         self.layout.addWidget(self.central, 0, 0, Qt.AlignmentFlag.AlignCenter)

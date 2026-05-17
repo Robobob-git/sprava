@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QRect, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QStatusBar, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem, QStackedWidget
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QRegion
 
-from autre_fonctions import obtenir_vrai_chemin
+from autre_fonctions import obtenir_vrai_chemin, obtenir_user_chemin, obtenir_pp_chemin, download_pp, changer_pp
 
 from interfaces.interface_graphique import BoutonCustom, ListeElements, TexteEtImage, LigneCategorie, GroupeBoutons
 
@@ -17,7 +17,6 @@ from interfaces.interface_mp import MpManager
 
 from gestionnaires_requetes import GestionAmis, GestionUtilisateurs
 from cache import Cache, Ami
-from amis import WidgetAmi
 
 class WidgetExtraBouton(QWidget):
     def __init__(self, texte:str, icone:str = None):
@@ -54,6 +53,8 @@ class InterfaceMessagerie(QWidget):
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
+        self.layout.setColumnStretch(0, 1)
+        self.layout.setColumnStretch(1, 4)
 
         '''self.gestionnaire_utilisateurs = GestionUtilisateurs(token=self.token)
         self.gestionnaire_amis = GestionAmis(token=self.token)'''
@@ -80,6 +81,8 @@ class InterfaceMessagerie(QWidget):
 
         wsb.friend_removed.connect(lambda id_: self.remove_friend(id_, True))
 
+        wsb.user_updated.connect(self.friend_update)
+
     def _faire_ui(self):
         self._faire_header_compte()
         self._faire_interfaces()
@@ -91,22 +94,18 @@ class InterfaceMessagerie(QWidget):
 
         self.nom_label = QLabel(self.session.user_info.get("username"))
 
-        user_pp = QLabel()
-        pixmap = QPixmap(obtenir_vrai_chemin("images/pp1.png")).scaled(25, 25, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
-        taille = min(pixmap.width(), pixmap.height())
-        user_pp.setPixmap(pixmap)
-        masque = QRegion(QRect(0, 0, taille, taille), QRegion.RegionType.Ellipse)   # On crée un "masque" circulaire qu'on va appliquer sur une image pour l'avoir en rond
-        user_pp.setMask(masque)
+        self.user_pp = QLabel()
+        changer_pp(tailles=30, labels=self.user_pp, default=True)
 
         bouton_para = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/settings_white.svg"), custom_command=lambda : self.extra_bouton_clique("bouton_compte"))
         bouton_deco = BoutonCustom(taille=(25, 25), chemin_image=obtenir_vrai_chemin("images/disconnect_white.svg"), custom_command=self.deco)
 
-        layout.addWidget(user_pp)
+        layout.addWidget(self.user_pp)
         layout.addWidget(self.nom_label)
         layout.addWidget(bouton_para)
         layout.addWidget(bouton_deco)
 
-        self.layout.addWidget(self.header_compte, 0, 0)        
+        self.layout.addWidget(self.header_compte, 0, 0)
 
     def _faire_interfaces(self):
         self.interface_barre_laterale = InterfaceBarreLaterale(session=self.session, liste_amis=self.liste_amis)
@@ -137,6 +136,7 @@ class InterfaceMessagerie(QWidget):
         self.interface_ajouter_amis.nouv_demande.connect(lambda ami_id, ami_nom: self.interface_demandes_envoyees.ajouter_demande(ami_id=ami_id, ami_nom=ami_nom))
         self.interface.addWidget(self.interface_para)
         self.interface_para.nouv_nom.connect(self.nom_label.setText)
+        self.interface_para.nouv_pp.connect(self.new_pp)
         
         self.interface.addWidget(self.interface_demandes_recues)
         self.interface.addWidget(self.interface_demandes_envoyees)
@@ -146,6 +146,14 @@ class InterfaceMessagerie(QWidget):
         self.mp_manager.envoi_msg.connect(lambda ami_id, msg : self.send_msg(ami_id, msg))
 
         self.interface.setCurrentWidget(self.interface_amis)
+
+        # Mise à jour si nécessaire de la pp
+        pp_id = self.session.user_info['avatar_id']
+        pp_path = obtenir_pp_chemin(self.session.user_id, pp_id)
+        if pp_path == '':
+            self.new_pp(pp_id)
+        else:
+            changer_pp(tailles=30, labels=self.user_pp, path=pp_path)
 
         if self.test:
             def recevoir_demande():
@@ -169,8 +177,25 @@ class InterfaceMessagerie(QWidget):
 
         layout_amis = QHBoxLayout()
         label_logo_amis = TexteEtImage(texte="Amis", chemin_image=obtenir_vrai_chemin("images/friends_white.svg"))
-        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_amis))
-        bouton_blocked = BoutonCustom(texte="Bloqués", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_blocked))
+        style = """
+        QPushButton {
+            background-color: #2b2d31;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+        QPushButton:checked {
+            background-color: #3a3d42;
+        }
+        QPushButton:hover {
+            background-color: #404249;
+        }
+        QPushButton:focus {
+            outline: none;
+            border: none;
+        }"""
+        bouton_tous = BoutonCustom(texte="Tous", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_amis))
+        bouton_blocked = BoutonCustom(texte="Bloqués", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_blocked))
         style = """QPushButton {
             background-color: #5865F2;
             color: white;
@@ -192,12 +217,14 @@ class InterfaceMessagerie(QWidget):
         }
         """
         bouton_ajouter = BoutonCustom(texte="Ajouter", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_ajouter_amis))
-        groupe_bouton_amis = GroupeBoutons([bouton_tous, bouton_blocked, bouton_ajouter])
+        groupe_boutons_amis = GroupeBoutons([bouton_tous, bouton_blocked, bouton_ajouter])
         bouton_tous.setChecked(True)
 
         layout_amis.addWidget(label_logo_amis)
-        layout_amis.addWidget(groupe_bouton_amis)
+        layout_amis.addWidget(groupe_boutons_amis)
+        layout_amis.setAlignment(groupe_boutons_amis, Qt.AlignmentFlag.AlignLeft)
         layout_amis.addStretch()
+        layout_amis.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.categorie_amis = QWidget()
         self.categorie_amis.setLayout(layout_amis)
 
@@ -205,19 +232,40 @@ class InterfaceMessagerie(QWidget):
 
         layout_demandes = QHBoxLayout()
         label_logo_demandes = TexteEtImage(texte="Demandes", chemin_image=obtenir_vrai_chemin("images/demandes_white.svg"))
-        bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_recues))
-        bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), custom_command=lambda : self.changer_interface(self.interface_demandes_envoyees))
+        style = """
+        QPushButton {
+            background-color: #2b2d31;
+            color: white;
+            border-radius: 12px;
+            border: none;
+            font-size: 12px;
+        }
+        QPushButton:checked {
+            background-color: #3a3d42;
+        }
+        QPushButton:hover {
+            background-color: #404249;
+        }
+        QPushButton:focus {
+            outline: none;
+            border: none;
+        }
+        """
+        bouton_recues = BoutonCustom(texte="Reçues", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_demandes_recues))
+        bouton_envoyees = BoutonCustom(texte="Envoyées", taille=(75, 30), style=style, custom_command=lambda : self.changer_interface(self.interface_demandes_envoyees))
         groupe_boutons_demandes = GroupeBoutons([bouton_recues, bouton_envoyees])
         bouton_recues.setChecked(True)
 
         layout_demandes.addWidget(label_logo_demandes)
         layout_demandes.addWidget(groupe_boutons_demandes)
+        layout_demandes.setAlignment(groupe_boutons_demandes, Qt.AlignmentFlag.AlignLeft)
         layout_demandes.addStretch()
         self.categorie_demandes = QWidget()
         self.categorie_demandes.setLayout(layout_demandes)
 
 
         self.ligne_categorie.addWidget(self.categorie_vide)
+        self.ligne_categorie.addWidget(self.mp_manager.widget_header)
         self.ligne_categorie.addWidget(self.categorie_amis)
         self.ligne_categorie.addWidget(self.categorie_demandes)
         self.ligne_categorie.setCurrentWidget(self.categorie_amis)
@@ -237,6 +285,7 @@ class InterfaceMessagerie(QWidget):
     
     def contact_clique(self, ami_id:int):
         print(f"Ami id cliqué : {ami_id}")
+        self.ligne_categorie.setCurrentWidget(self.mp_manager.widget_header)
         self.mp_manager.choisir_conv(ami_id)
 
         self.changer_interface(self.interface_mp)
@@ -244,6 +293,11 @@ class InterfaceMessagerie(QWidget):
     def deco(self):
         self.session.fermer()
         self.deconnexion.emit()
+
+    def new_pp(self, pp_id:str):
+        old_pp_id = self.session.user_info["avatar_id"]
+        self.session.user_info["avatar_id"] = pp_id
+        download_pp(pp_id=pp_id, old_pp_id=old_pp_id, tailles=[30, 50], labels=[self.user_pp, self.interface_para.pp], session=self.session)
 
     def new_friend(self, friend_id:int):
         def succes(rep1):
@@ -322,7 +376,7 @@ class InterfaceMessagerie(QWidget):
     def send_msg(self, friend_id:int, msg:str):
         conv_id = self.cache.conv_id_par_ami_id(friend_id)
         def succes(rep):
-            self.mp_manager.ajouter_msg(msg_id=rep['message_id'], ami_id=friend_id, sender_id=self.session.user_id, message=msg, avec_cache=True)
+            self.mp_manager.ajouter_msg(msg_id=rep['message_id'], ami_id=friend_id, sender_id=self.session.user_id, pp_id=self.session.user_info['avatar_id'], message=msg, avec_cache=True)
         def erreur(e):
             print(f"Erreur serveur lors de l'envoi d'un message à {friend_id} : {e}")
 
@@ -339,12 +393,15 @@ class InterfaceMessagerie(QWidget):
         self.mp_manager.ajouter_msg(msg_id=msg_infos['message_id'], ami_id=ami.id, sender_id=msg_infos['sender_id'], message=msg_infos.get('content'), heure=msg_infos.get('created_at'), pp_id=ami.pp_id, avec_cache=True)
 
     def friend_update(self, friend_id:int, new_pseudo:str, new_pp:str):
+        print(f'\nCHANGEMENT\n')
         old_ami = self.cache.ami_par_id(friend_id)
-        new_ami = self.cache.Ami(id=friend_id, username=new_pseudo, pp_id=new_pp, mail=old_ami.mail, phone=old_ami.phone, date_of_birth=old_ami.date_of_birth, online=old_ami.online, conv_id=old_ami.conv_id)
+        new_ami = Ami(id=friend_id, username=new_pseudo, pp_id=new_pp, mail=old_ami.mail, phone=old_ami.phone, date_of_birth=old_ami.date_of_birth, online=old_ami.online, conv_id=old_ami.conv_id)
         
-        if old_ami.username != new_pseudo or old_ami.pp != new_pp:
+        if old_ami.username != new_pseudo or old_ami.pp_id != new_pp:
+            print(f'\nCHANGEMENT2\n')
             self.cache.upsert_ami(new_ami)
             
+
             self.interface_amis.retirer_ami(friend_id)
             self.interface_amis.ajouter_ami(friend_id)
 
@@ -353,6 +410,8 @@ class InterfaceMessagerie(QWidget):
 
             self.mp_manager.supprimer_conv(friend_id)
             self.mp_manager.ajouter_conv(friend_id)
+            
+            download_pp(pp_id=new_pp, old_pp_id=old_ami.pp_id, labels=self.mp_manager.headers[friend_id].pp, tailles=40, session=self.session)
 
 
 

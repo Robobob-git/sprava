@@ -95,11 +95,13 @@ class InterfaceAjouterAmi(QWidget):
             if not id_:
                 return
             if self.session.cache.is_blocked(id_):
+                QMessageBox.warning(self, "Erreur", "Impossible d'ajouter un utilisateur bloqué")
                 erreur(f"{id_} est bloqué")
                 return
 
             def succes2(rep2):
                 if rep2.get("status_code") == 200:
+                    QMessageBox.information(self, "INFO", "Demande d'ami envoyée")
                     self.nouv_demande.emit(id_, nom)
 
             self.session.requettes_manager.executer(func=lambda : self.session.gestionnaire_amis.demander_en_ami(ami_id=id_), func_succes=succes2, func_erreur=erreur)

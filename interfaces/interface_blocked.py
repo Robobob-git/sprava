@@ -27,7 +27,7 @@ class InterfaceBlocked(QWidget):
 
         self.liste_blocked = ListeElements()
         for blocked_id in self.cache.blocked_ids():
-            widget_blocked = WidgetBlocked(blocked_id, self.cache)
+            widget_blocked = WidgetBlocked(blocked_id, self.session)
             widget_blocked.ami_unblock.connect(lambda b : self.ami_unblock.emit(b))
             self.liste_blocked.ajouter_item(data=blocked_id, widget=widget_blocked)
         self.layout.addWidget(self.liste_blocked)
@@ -48,6 +48,6 @@ class InterfaceBlocked(QWidget):
         self.liste_blocked.retirer_item(data=id_)
     
     def new_blocked(self, id_):
-        widget_blocked = WidgetBlocked(id_, self.cache)
+        widget_blocked = WidgetBlocked(id_, self.session)
         widget_blocked.ami_unblock.connect(lambda b : self.ami_unblock.emit(b))
         self.liste_blocked.ajouter_item(data=id_, widget=widget_blocked)

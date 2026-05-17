@@ -1,5 +1,5 @@
 from cache import Cache
-from gestionnaires_requetes import GestionAmis, GestionUtilisateurs, GestionConversations
+from gestionnaires_requetes import GestionAmis, GestionUtilisateurs, GestionConversations, GestionMedia
 from ws_bridge import WSBridge
 
 
@@ -23,6 +23,7 @@ class Session:
         self.gestionnaire_amis = GestionAmis(token=token)
         self.gestionnaire_utilisateurs = GestionUtilisateurs(token=token)
         self.gestionnaire_conv = GestionConversations(token=token)
+        self.gestionnaire_media = GestionMedia(token=token)
 
     def stop_ws(self) -> None:
         if self.ws_bridge is None:

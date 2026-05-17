@@ -46,7 +46,7 @@ class InterfaceAmis(QWidget):
         self.liste_amis = ListeElements()
         for ami_id in self.cache.amis_ids():
             self.ajouter_ami(ami_id)
-        self.liste_amis.itemClicked.connect(self.ami_clique)
+        self.liste_amis.itemDoubleClicked.connect(lambda item : self.start_conv.emit(item.data(Qt.ItemDataRole.UserRole)))
         self.layout.addWidget(self.liste_amis)
     
     def filtrer(self, texte:str):
@@ -60,13 +60,9 @@ class InterfaceAmis(QWidget):
             if ami:
                 nom_correspond = ami.username.lower().startswith(txt)
                 item.setHidden(not nom_correspond)  # Masquer si ne correspond pas
-        
-    def ami_clique(self, item):
-        data = item.data(Qt.ItemDataRole.UserRole)
-        print(f"ami cliqué : {data}")
 
     def ajouter_ami(self, ami_id:int):
-        widget_ami = WidgetAmi(ami_id, self.cache, True)
+        widget_ami = WidgetAmi(ami_id, self.session, True)
         widget_ami.ami_remove.connect(lambda id_: self.ami_remove.emit(id_))    # On renvoie un signal plus haut vers interface_messagerie
         widget_ami.ami_block.connect(lambda id_: self.ami_block.emit(id_))  # la même
         widget_ami.start_conv.connect(lambda id_: self.start_conv.emit(id_))    # la même

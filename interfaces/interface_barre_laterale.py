@@ -34,7 +34,7 @@ class InterfaceBarreLaterale(QWidget):
     def __init__(self, session, liste_amis:list):
         super().__init__()
 
-        self.cache = session.cache
+        self.session = session
         self.liste_amis = liste_amis
 
         self.layout = QVBoxLayout(self)
@@ -50,14 +50,16 @@ class InterfaceBarreLaterale(QWidget):
         self.widget_liste_extra_boutons.ajouter_item(data="bouton_demandes", widget=WidgetExtraBouton(texte="Demandes d'ami", icone=obtenir_vrai_chemin('images/demandes_white.svg')))
 
         for ami_id in self.liste_amis:
-            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
+            self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.session))
 
         self.layout.addWidget(self.widget_liste_extra_boutons)
         self.layout.addWidget(self.widget_colonne_contacts)
+        self.layout.setStretch(0, 1)
+        self.layout.setStretch(1, 4)
 
 
     def ajouter_ami(self, ami_id:int):
-        self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.cache))
+        self.widget_colonne_contacts.ajouter_item(data=ami_id, widget=WidgetAmi(ami_id, self.session))
 
     def retirer_ami(self, ami_id:int):
         self.widget_colonne_contacts.retirer_item(data=ami_id)

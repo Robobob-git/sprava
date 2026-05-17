@@ -2,6 +2,8 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
 
+from autre_fonctions import obtenir_user_chemin
+
 class Ami:
     def __init__(self, id:int, username:str, pp_id:int = None, mail:str = None, phone:str = None, date_of_birth:str = None, online:bool = False, conv_id:int = None):
         self.id = id
@@ -19,7 +21,7 @@ class Ami:
         return Ami(
             id=d.get("user_id"),
             username=d.get("username"),
-            pp_id=d.get("pp_id"),
+            pp_id=d.get("avatar_id"),
             mail=d.get("mail"),
             phone=d.get("phone"),
             date_of_birth=d.get("date_of_birth"),
@@ -47,8 +49,7 @@ class Blocked:
 
 class Cache:
     def __init__(self, user_id: int):
-        chemin = Path(f"data/cache_{user_id}.db")
-        chemin.parent.mkdir(parents=True, exist_ok=True)
+        chemin = obtenir_user_chemin(user_id, "cache.db")
 
         self._conn = sqlite3.connect(chemin)
         self._conn.row_factory = sqlite3.Row

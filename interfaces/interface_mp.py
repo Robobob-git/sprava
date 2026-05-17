@@ -3,22 +3,44 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont
 from datetime import datetime, timedelta, timezone
 
+from autre_fonctions import obtenir_pp_chemin, download_pp, changer_pp
+
 from interfaces.interface_graphique import BoutonCustom, TexteEtImage
 
 class HeaderMP(QWidget):
-    def __init__(self, session): 
+    def __init__(self, ami_id:int, session): 
         super().__init__()
 
-        self.cache = session.cache
+        self.session = session
 
         self.layout = QHBoxLayout(self)
+        self.setFixedHeight(50)
 
-        self.header = None
-        self.headers = []
+        self.ami = self.session.cache.ami_par_id(ami_id)
+
+        self._faire_ui()
     
-    def changer_header(self, ami_id, cache):
-        ami = cache.ami_par_id(ami_id)
-        self.header = None
+    def _faire_ui(self):
+        self.pp = QLabel()
+        self.pp.setFixedSize(40, 40)
+        self.modifier_pp(self.ami.pp_id)
+
+        self.nom = QLabel(self.ami.username)
+
+        self.layout.addWidget(self.pp)
+        self.layout.addWidget(self.nom)
+        self.layout.addStretch()
+
+    def modifier_pp(self, pp_id:str):
+        if pp_id is None:
+            changer_pp(tailles=40, labels=self.pp, default=True)
+            return
+        
+        pp_path = obtenir_pp_chemin(self.session.user_id, pp_id)
+        changer_pp(tailles=40, labels=self.pp, path=pp_path)
+    
+    def modifier_nom(self, nom:str):
+        self.nom.setText(nom)
 
 class MpManager(QObject):
     envoi_msg = pyqtSignal(int, str)
@@ -28,11 +50,18 @@ class MpManager(QObject):
 
         self.session = session
 
+        self.headers = {}
         self.mps = {}
+        
+        self.widget_header = QStackedWidget()
         self.widget_conv = QStackedWidget()
 
 
     def ajouter_conv(self, ami_id:int):
+        header = HeaderMP(ami_id, self.session)
+        self.headers[ami_id] = header
+        self.widget_header.addWidget(header)
+
         conv_id = self.session.cache.conv_id_par_ami_id(ami_id)
         mp = InterfaceMP(conv_id, ami_id, self.session)
         mp.envoi_msg.connect(lambda ami_id, msg : self.envoi_msg.emit(ami_id, msg))
@@ -44,6 +73,11 @@ class MpManager(QObject):
             print(f"Il n'y a pas de conv avec l'ami d'id : {ami_id}")
             return
         
+        widget = self.headers[ami_id]
+        self.widget_header.removeWidget(widget)
+        widget.deleteLater()
+        del self.headers[ami_id]
+
         widget = self.mps[ami_id]
         self.widget_conv.removeWidget(widget)
         widget.deleteLater()
@@ -52,14 +86,16 @@ class MpManager(QObject):
     def choisir_conv(self, ami_id:int):
         if ami_id not in self.mps.keys():
             self.ajouter_conv(ami_id)
+
+        self.widget_header.setCurrentWidget(self.headers[ami_id])
         self.widget_conv.setCurrentWidget(self.mps[ami_id])
         self.mps[ami_id].scroll_en_bas()
 
-    def ajouter_msg(self, msg_id:int, ami_id:int, sender_id:int, message:str, heure=None, pp_id=None, avec_cache=False):
-        self.mps.get(ami_id).ajouter_msg(msg_id, sender_id, message, heure, pp_id, avec_cache)
+    def ajouter_msg(self, msg_id:int, ami_id:int, sender_id:int, message:str, pp_id:str, heure=None, avec_cache=False):
+        self.mps.get(ami_id).ajouter_msg(msg_id, sender_id, message, pp_id, heure, avec_cache)
 
 class MessageWidget(QWidget):
-    def __init__(self, auteur:str, message:str, heure:str = None, pp_id=None, montrer_header=True):
+    def __init__(self, auteur:str, message:str, heure:str = None, pp_path:str=None, montrer_header:bool=True):
         super().__init__()
         self.auteur = auteur
         self.message = message
@@ -77,7 +113,7 @@ class MessageWidget(QWidget):
 
         self.montrer_header = montrer_header
         #self.montrer_header=False
-        self.pp_id = pp_id
+        self.pp_path = pp_path
         
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
@@ -98,7 +134,9 @@ class MessageWidget(QWidget):
         self.layout.setSpacing(10)'''
         if self.montrer_header:
             self.layout.addSpacing(50)
-            #self.layout.addWidget(self.pp_id, alignment=Qt.AlignmentFlag.AlignTop)
+            self.pp = QLabel()
+            changer_pp(tailles=30, labels=self.pp, path=self.pp_path, default=True if self.pp_path =='' else False)
+            self.layout.addWidget(self.pp, alignment=Qt.AlignmentFlag.AlignTop)
         else:
             # Espace pour aligner avec les messages qui ont un pp_id
             self.layout.addSpacing(50)
@@ -142,6 +180,8 @@ class InterfaceMP(QWidget):
         self.messages = []
         self.requettes_manager = self.session.requettes_manager
 
+        self.offset = 0
+        self.charge = False
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -150,41 +190,22 @@ class InterfaceMP(QWidget):
         self.charger_cache()
     
     def _faire_ui(self):
-        '''self.windget_total.setContentsMargins(0, 0, 0, 0)
-        self.windget_total.setSpacing(0)'''
-
+        self.bouton_charger_plus = QPushButton("Charger plus")
+        self.bouton_charger_plus.clicked.connect(self.charger_plus)
 
         self.zone_scroll = QScrollArea()
         self.zone_scroll.setWidgetResizable(True)
-        '''self.zone_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.zone_scroll.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: #36393f;
-            }
-            QScrollBar:vertical {
-                background-color: #2f3136;
-                width: 12px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #202225;
-                border-radius: 6px;
-                min-height: 20px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #18191c;
-            }
-        """)'''
 
         self.conv = QWidget()
-        '''self.conv.setStyleSheet("background-color: #36393f;")'''
         self.conv_layout = QVBoxLayout(self.conv)
-        '''self.conv_layout.setContentsMargins(0, 10, 0, 10)
-        self.conv_layout.setSpacing(0)
-        self.conv_layout.addStretch()'''
+        self.charger_plus_container = QWidget()
+        charger_plus_layout = QHBoxLayout(self.charger_plus_container)
+        charger_plus_layout.addStretch()
+        charger_plus_layout.addWidget(self.bouton_charger_plus)
+        charger_plus_layout.addStretch()
+        self.conv_layout.addWidget(self.charger_plus_container)
 
         self.zone_scroll.setWidget(self.conv)
-
 
         self.ecrire_widget = QWidget()
         self.ecrire_layout = QHBoxLayout()
@@ -222,14 +243,49 @@ class InterfaceMP(QWidget):
         self.layout.addWidget(self.ecrire_widget)
     
     def charger_cache(self):
-        print(f"\nCONV ID : {self.conv_id}")
         messages = self.cache.lire_msgs(self.conv_id)
-        print(f'messages : {messages}')
-
+        self.offset = len(messages)
         self.ajouter_messages(messages, True, False)
         self.comparer_serv(messages)
 
+    def charger_plus(self):
+        if self.charge:
+            return
+        self.charge = True
 
+        def succes(rep):
+            msgs = rep.get("messages")
+            if not msgs:
+                self.charge = False
+                return
+
+            msgs = msgs[::-1]  # du plus vieux au plus recent
+
+            sb = self.zone_scroll.verticalScrollBar()
+            old_value = sb.value()
+
+            for msg in msgs:
+                sender_id = msg["sender_id"]
+                if sender_id == self.user_id:
+                    pp_id = self.session.user_info["avatar_id"]
+                    auteur = self.user_username
+                else:
+                    pp_id = self.ami.pp_id
+                    auteur = self.ami.username
+
+                w = MessageWidget(auteur, msg["content"], msg["created_at"], obtenir_pp_chemin(self.user_id, pp_id), True)
+                self.conv_layout.insertWidget(1, w)
+                self.messages.insert(0, w)
+
+            sb.setValue(old_value + 1)
+
+            self.offset += len(msgs)
+            self.charge = False
+
+        def erreur(e):
+            self.charge = False
+
+        self.requettes_manager.executer(func=lambda: self.session.gestionnaire_conv.obtenir_msgs(self.conv_id, limite=50, offset=self.offset), func_succes=succes, func_erreur=erreur)
 
     def comparer_serv(self, cache_messages:list[dict]):
         def succes(rep):
@@ -251,7 +307,7 @@ class InterfaceMP(QWidget):
 
         self.requettes_manager.executer(func=lambda : self.session.gestionnaire_conv.obtenir_msgs(self.conv_id), func_succes=succes, func_erreur=erreur)
     
-    def ajouter_msg(self, msg_id:int, sender_id:int, message:str, heure=None, pp_id=None, avec_cache=False):
+    def ajouter_msg(self, msg_id:int, sender_id:int, message:str, pp_id:str, heure=None, avec_cache=False):
         if sender_id == self.user_id:
             auteur = self.user_username
         else:
@@ -259,9 +315,9 @@ class InterfaceMP(QWidget):
         
         if avec_cache:
             self.cache.add_msg(conv_id=self.conv_id, msg_id=msg_id, sender_id=sender_id, msg=message)
-        
-        message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_id=pp_id, montrer_header=True)
-        self.conv_layout.addWidget(message_widget)
+
+        message_widget = MessageWidget(auteur=auteur, message=message, heure=heure, pp_path=obtenir_pp_chemin(self.user_id, pp_id), montrer_header=True)
+        self.conv_layout.insertWidget(1, message_widget)
         '''self.zone_scroll.ensureWidgetVisible(message_widget)    # "Attend" que la taille du widget sois calculée poru bien scroll au plus bas '''
         self.messages.append(message_widget)
         
@@ -269,10 +325,17 @@ class InterfaceMP(QWidget):
     
     def ajouter_messages(self, messages:list[dict], du_cache:bool=False, avec_cache:bool = False):
         for msg in messages:
-            if du_cache:
-                self.ajouter_msg(msg_id=msg['msg_id'], sender_id=msg['sender_id'], message=msg['contenu'], heure=msg['timestamp'])
+            sender_id = msg['sender_id']
+            if sender_id == self.user_id:
+                pp_id = self.session.user_info['avatar_id']
             else:
-                self.ajouter_msg(msg_id=msg['id'], sender_id=msg['sender_id'], message=msg['content'], heure=msg['created_at'])
+                pp_id = self.ami.pp_id
+
+
+            if du_cache:
+                self.ajouter_msg(msg_id=msg['msg_id'], sender_id=msg['sender_id'], message=msg['contenu'], pp_id=pp_id, heure=msg['timestamp'])
+            else:
+                self.ajouter_msg(msg_id=msg['id'], sender_id=msg['sender_id'], message=msg['content'], pp_id=pp_id, heure=msg['created_at'])
            
             if avec_cache:
                 if du_cache:

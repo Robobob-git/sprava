@@ -2,20 +2,20 @@ from PyQt6.QtCore import Qt, QSize, QUrl, QEventLoop, pyqtSignal, QPoint
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QPushButton, QLineEdit, QLabel, QMenuBar, QStatusBar, QMenu, QCompleter, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QDoubleSpinBox, QScrollArea, QSpinBox, QSizePolicy, QListWidget, QListWidgetItem
 from PyQt6.QtGui import QAction, QPixmap, QIcon, QFont, QCursor
 
-from cache import Cache
 from interfaces.interface_graphique import BoutonCustom, BoutonMenu
-from autre_fonctions import obtenir_vrai_chemin
+from autre_fonctions import obtenir_vrai_chemin, obtenir_pp_chemin, download_pp, changer_pp
 
 class WidgetBlocked(QWidget):
     ami_unblock = pyqtSignal(int)
 
-    def __init__(self, blocked_id:int, cache:Cache):
+    def __init__(self, blocked_id:int, session):
         super().__init__()
 
         self.blocked_id = blocked_id
-        self.cache = cache
+        self.session = session
+        self.cache = session.cache
 
-        self.blocked = cache.blocked_par_id(blocked_id)
+        self.blocked = self.cache.blocked_par_id(blocked_id)
         if self.blocked:
             self.layout = QHBoxLayout()
             self.layout.setContentsMargins(10, 5, 10, 5)
@@ -24,7 +24,7 @@ class WidgetBlocked(QWidget):
 
             self.setLayout(self.layout)
         else:
-            print(f'{self.blocked_id} introuvable dans {cache.blocked_ids()}')
+            print(f'{self.blocked_id} introuvable dans {self.cache.blocked_ids()}')
         
     def _construire_widget(self):
         pp = QLabel()
@@ -46,13 +46,14 @@ class WidgetAmi(QWidget):
     ami_block = pyqtSignal(int)
     start_conv = pyqtSignal(int)
 
-    def __init__(self, ami_id:int, cache:Cache, detaillee:bool=False):
+    def __init__(self, ami_id:int, session, detaillee:bool=False):
         super().__init__()
         self.ami_id = ami_id
-        self.cache = cache
+        self.session = session
+        self.cache = session.cache
         self.detaillee = detaillee
 
-        self.ami = cache.ami_par_id(ami_id)
+        self.ami = self.cache.ami_par_id(ami_id)
         if self.ami:
             self.layout = QHBoxLayout()
             self.layout.setContentsMargins(10, 5, 10, 5)
@@ -61,12 +62,15 @@ class WidgetAmi(QWidget):
 
             self.setLayout(self.layout)
         else:
-            print(f'{self.ami_id} introuvable dans {cache.amis_ids()}')
+            print(f'{self.ami_id} introuvable dans {self.cache.amis_ids()}')
 
     def _construire_widget(self):
         pp = QLabel()
-        '''pp.setPixmap(ami.pp)
-        avatar_label.setFixedSize(40, 40)'''
+        pp_path = obtenir_pp_chemin(self.session.user_id, self.ami.pp_id)
+        if self.ami.pp_id is not None and pp_path == '':
+            download_pp(self.ami.pp_id, '', tailles=30, labels=pp, session=self.session)
+        else:
+            changer_pp(tailles=30, labels=pp, path=pp_path)
         self.layout.addWidget(pp)
 
         nom = QLabel(self.ami.username)
